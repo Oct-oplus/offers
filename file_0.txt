@@ -1,0 +1,246 @@
+﻿<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>عروضي</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0B1220;--panel:#0F1A2B;--cardA:rgba(255,255,255,.06);--cardB:rgba(255,255,255,.02);--stroke:rgba(255,255,255,.12);--text:rgba(255,255,255,.92);--muted:rgba(255,255,255,.70);--blue:#2DD4FF;--blue2:#4F8BFF;--green:#22C55E;--amber:#FBBF24;--fill:rgba(255,255,255,.06);--shadow:0 18px 55px rgba(0,0,0,.45);--navbg:rgba(15,26,43,.92);
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root[data-theme="light"]{--bg:#F3F6FB;--panel:#FFFFFF;--cardA:rgba(0,0,0,.04);--cardB:rgba(0,0,0,.02);--stroke:rgba(0,0,0,.10);--text:rgba(10,16,24,.92);--muted:rgba(10,16,24,.65);--fill:rgba(0,0,0,.04);--shadow:0 18px 55px rgba(0,0,0,.16);--navbg:rgba(255,255,255,.94);--amber:#D97706}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;font-family:"IBM Plex Sans Arabic",Tahoma,system-ui,sans-serif;color:var(--text);background:radial-gradient(900px 600px at 85% -10%,rgba(45,212,255,.22),transparent 55%),radial-gradient(700px 500px at 5% 0%,rgba(34,197,94,.16),transparent 60%),var(--bg);background-color:var(--bg);line-height:1.7}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.app{max-width:560px;margin:0 auto;padding:12px 14px 100px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.top b{font-size:20px}
+.chip,.toggle{border:1px solid var(--stroke);background:var(--fill);border-radius:999px;padding:8px 12px;font-size:13px;display:inline-flex;gap:8px;align-items:center}
+.dot{width:10px;height:10px;border-radius:99px;background:linear-gradient(180deg,var(--blue),var(--green))}
+.dot.off{background:var(--muted);opacity:.5}
+h2{font-size:18px;margin:22px 0 10px}
+.hero{border:1px solid var(--stroke);background:linear-gradient(135deg,rgba(79,139,255,.16),rgba(34,197,94,.10));border-radius:22px;padding:18px}
+.hero h1{margin:0 0 4px;font-size:24px}
+.hero p{margin:0;color:var(--muted)}
+.carousel{margin:0 -14px;overflow-x:auto;padding:4px 0;scrollbar-width:none;cursor:grab}
+.carousel::-webkit-scrollbar{display:none}
+.carousel.drag{cursor:grabbing;user-select:none}
+.track{display:flex;width:max-content}
+.track .card{width:265px;margin-inline-end:12px;flex:none}
+.card{position:relative;overflow:hidden;border:1px solid var(--stroke);border-radius:18px;padding:14px;background:linear-gradient(180deg,var(--cardA),var(--cardB));margin-bottom:12px;cursor:pointer}
+.card:hover{border-color:rgba(45,212,255,.55)}
+.glow{position:absolute;inset:-70px -70px auto auto;width:180px;height:180px;background:radial-gradient(circle at 30% 30%,rgba(45,212,255,.25),transparent 60%),radial-gradient(circle at 70% 60%,rgba(34,197,94,.18),transparent 62%);pointer-events:none}
+.card>*{position:relative}
+.tag{display:inline-block;font-size:12px;padding:4px 10px;border-radius:99px;border:1px solid var(--stroke);background:var(--fill);color:var(--muted)}
+.card h3{margin:8px 0 2px;font-size:17px}
+.desc{margin:0 0 8px;color:var(--muted);font-size:14px}
+.meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pill{font-size:12px;padding:4px 10px;border-radius:12px;border:1px solid var(--stroke);background:var(--fill)}
+.price{border-color:rgba(34,197,94,.55);background:rgba(34,197,94,.12);font-weight:700}
+.star{color:var(--amber);font-size:13px}
+.ok{border-color:rgba(34,197,94,.55);background:rgba(34,197,94,.12)}
+.cats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cat{border:1px solid var(--stroke);background:linear-gradient(180deg,var(--cardA),var(--cardB));border-radius:16px;padding:14px;text-align:right}
+.cat span{font-size:22px;display:block}
+.cat small{color:var(--muted)}
+.btn{border:1px solid var(--stroke);background:var(--fill);border-radius:12px;padding:11px 14px;font-size:14px;text-decoration:none;color:var(--text);display:inline-flex;justify-content:center;align-items:center;gap:6px}
+.btn.primary{border-color:rgba(45,212,255,.7);background:rgba(45,212,255,.14)}
+.btn.block{width:100%}
+.panel{border:1px solid var(--stroke);background:linear-gradient(180deg,var(--cardA),var(--cardB));border-radius:18px;padding:14px;margin-bottom:12px}
+.panel h3{margin:0 0 4px;font-size:16px}
+.panel p{margin:0 0 8px;color:var(--muted);font-size:14px}
+.steps{margin:0;padding:0;list-style:none;counter-reset:s}
+.steps li{counter-increment:s;display:flex;gap:10px;margin:8px 0;color:var(--muted);font-size:14px}
+.steps li:before{content:counter(s);flex:none;width:24px;height:24px;border-radius:99px;display:grid;place-items:center;background:rgba(45,212,255,.15);color:var(--blue);font-weight:700;font-size:13px}
+.seg{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px}
+.seg button{flex:none;border:1px solid var(--stroke);background:var(--fill);border-radius:99px;padding:8px 14px;font-size:14px}
+.seg button.on{border-color:rgba(45,212,255,.7);background:rgba(45,212,255,.14);font-weight:700}
+.bar{height:8px;border-radius:99px;background:var(--fill);overflow:hidden;margin:8px 0 4px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--green))}
+.note{border:1px solid rgba(251,191,36,.55);background:rgba(251,191,36,.10);border-radius:14px;padding:12px;margin:8px 0}
+.note.done{border-color:var(--stroke);background:var(--fill);opacity:.8}
+.note b{font-size:13px;color:var(--amber)}
+.note.done b{color:var(--green)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.sw{width:46px;height:26px;border-radius:99px;border:1px solid var(--stroke);background:var(--fill);position:relative;flex:none}
+.sw:after{content:"";position:absolute;top:2px;inset-inline-start:2px;width:20px;height:20px;border-radius:99px;background:var(--muted);transition:.2s}
+.sw[aria-checked=true]{background:rgba(34,197,94,.3)}
+.sw[aria-checked=true]:after{inset-inline-start:22px;background:var(--green)}
+.nav{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:center;padding:0 0 env(safe-area-inset-bottom,0px);background:var(--navbg);border-top:1px solid var(--stroke);backdrop-filter:blur(12px);z-index:5}
+.nav div{display:flex;width:100%;max-width:560px}
+.nav button{flex:1;border:0;background:none;padding:9px 0 8px;font-size:12px;color:var(--muted);position:relative}
+.nav button span{display:block;font-size:20px;line-height:1.2}
+.nav button.on{color:var(--blue);font-weight:700}
+.badge{position:absolute;top:4px;inset-inline-start:50%;margin-inline-start:6px;background:#EF4444;color:#fff;font-size:10px;border-radius:99px;min-width:16px;height:16px;line-height:16px}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10;display:none}
+.ov.show{display:block}
+.sheet{position:absolute;bottom:0;left:0;right:0;max-width:560px;margin:auto;max-height:88%;overflow-y:auto;background:var(--panel);border:1px solid var(--stroke);border-radius:22px 22px 0 0;padding:8px 16px calc(20px + env(safe-area-inset-bottom,0px));animation:up .25s ease}
+@keyframes up{from{transform:translateY(40px);opacity:0}}
+.grab{width:42px;height:4px;border-radius:9px;background:var(--stroke);margin:0 auto 10px}
+.rev{border-top:1px solid var(--stroke);padding:10px 0;font-size:14px}
+.rev small{color:var(--muted)}
+.stars button{border:0;background:none;font-size:28px;color:var(--muted);padding:0 2px}
+.stars button.on{color:var(--amber)}
+textarea{width:100%;font:inherit;color:var(--text);background:var(--fill);border:1px solid var(--stroke);border-radius:12px;padding:10px;min-height:70px;margin:6px 0}
+.toast{position:fixed;bottom:84px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;z-index:20;max-width:90%;display:none}
+.co{display:flex;align-items:center;gap:12px}
+.co .fl{font-size:28px}
+.co>div{flex:1}
+.co small{color:var(--muted)}
+.hl{border-color:rgba(45,212,255,.8)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <b id="ttl">عروضي</b>
+    <div class="row" style="gap:8px">
+      <button class="chip" data-act="tg"><span class="dot off" id="tgdot"></span><span id="tgtxt">تيليجرام: غير مربوط</span></button>
+      <button class="toggle" data-act="theme" aria-label="تبديل الوضع"><span class="dot"></span><span id="thl">دارك</span></button>
+    </div>
+  </div>
+  <main id="view"></main>
+</div>
+<nav class="nav"><div id="nav"></div></nav>
+<div class="ov" id="ov"><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+var CATS={coach:{n:'كوتشينغ',i:'🎯'},course:{n:'كورسات تطويرية',i:'📚'},session:{n:'جلسات نفسية',i:'🫶'},test:{n:'اختبارات تقييم',i:'🧭'}};
+var OFFERS=[
+{id:'c1',cat:'coach',t:'كوتشينغ التواصل',d:'تتعلم تعبّر عن نفسك وتسمع غيرك بوضوح وثقة.',m:'6 جلسات · 60 دقيقة',p:'00$',pts:['تحديد أنماط التواصل عندك','تمارين تطبيقية بين الجلسات','خطة متابعة بعد الانتهاء']},
+{id:'c2',cat:'coach',t:'كوتشينغ البزنس',d:'وضوح في الأهداف وقرارات أسرع لمشروعك أو عملك.',m:'8 جلسات · 60 دقيقة',p:'00$',pts:['خارطة أهداف ربع سنوية','معالجة العوائق في القرار','متابعة أسبوعية']},
+{id:'c3',cat:'coach',t:'كوتشينغ الحياة والأهداف',d:'ترتّب أولوياتك وتبني عادات تمشي معك.',m:'6 جلسات · 60 دقيقة',p:'00$',pts:['عجلة الحياة','أهداف قابلة للقياس','عادات صغيرة مستمرة']},
+{id:'k1',cat:'course',t:'إدارة الوقت والتركيز',d:'كورس عملي يرجّع لك تحكمك بيومك.',m:'10 دروس · 4 ساعات',p:'00$',pts:['طرق التخطيط اليومي','التعامل مع المشتتات','ملف تمارين جاهز']},
+{id:'k2',cat:'course',t:'بناء الثقة بالنفس',d:'خطوات متدرجة لحوار داخلي أهدأ وأقوى.',m:'8 دروس · 3 ساعات',p:'00$',pts:['فهم مصدر الشك بالنفس','تمارين يومية قصيرة','اختبار تقييم ذاتي']},
+{id:'k3',cat:'course',t:'مهارات القيادة',d:'لمن يبغى يقود فريق بثقة وتأثير.',m:'12 درس · 5 ساعات',p:'00$',pts:['أنماط القيادة','إعطاء الملاحظات','إدارة الخلافات']},
+{id:'s1',cat:'session',t:'جلسة القلق والضغوط',d:'مساحة آمنة لفهم القلق والتعامل معه.',m:'جلسات 50 دقيقة',p:'00$',pts:['فهم مسببات القلق','أدوات تهدئة عملية','متابعة بين الجلسات']},
+{id:'s2',cat:'session',t:'جلسة العلاقات',d:'لفهم أنماطك في العلاقات وتحسينها.',m:'جلسات 50 دقيقة',p:'00$',pts:['استكشاف الأنماط','وضع الحدود','تمارين تواصل']},
+{id:'s3',cat:'session',t:'جلسة التعافي من الاحتراق',d:'ترجّع طاقتك وتوازنك بعد فترة إرهاق.',m:'جلسات 50 دقيقة',p:'00$',pts:['تحديد مصادر الاستنزاف','خطة راحة','إعادة بناء الروتين']},
+{id:'t1',cat:'test',t:'اختبار الشخصية',d:'يعرّفك على نقاط قوتك وأسلوبك.',m:'25 دقيقة · النتيجة من المختص',p:'00$',pts:['اختبار مفصّل','تفسير شخصي للنتيجة','توصيات للتطوير']},
+{id:'t2',cat:'test',t:'اختبار القلق والتوتر',d:'يقيس مستوى التوتر الحالي لديك.',m:'15 دقيقة · النتيجة من المختص',p:'00$',pts:['مقياس معتمد','قراءة النتيجة لك','يُعاد كل شهرين']},
+{id:'t3',cat:'test',t:'اختبار الاحتراق الوظيفي',d:'تعرف إذا كان ضغط العمل بدأ يأثر عليك.',m:'15 دقيقة · النتيجة من المختص',p:'00$',pts:['مقياس معتمد','خطة مقترحة','متابعة بعد 3 أشهر']}];
+var REV={c1:[{n:'نورة',s:5,t:'غيّرت طريقة كلامي مع فريقي، أنصح فيها.'},{n:'خالد',s:4,t:'تمارين مفيدة وواضحة.'}],k1:[{n:'ريم',s:5,t:'مرتب وسهل، طبّقته من أول يوم.'}],s1:[{n:'م.',s:5,t:'حسّيت بأمان وراحة.'}],t1:[{n:'سلمان',s:4,t:'التفسير كان دقيق.'}]};
+var SUBS=[{id:'c1',prog:50,l:'الجلسة 3 من 6'},{id:'k1',prog:40,l:'4 من 10 دروس'},{id:'s1',prog:33,l:'الجلسة 2 من 6'}];
+var NOTES=[{t:'لا تتخطى تمرين التنفس اليومي قبل النوم، حتى لو كان يومك مزدحم.',ack:false},{t:'جهّز دفتر ملاحظاتك قبل الجلسة القادمة وسجّل فيه المواقف اللي أقلقتك.',ack:false},{t:'تم الاتفاق على تقليل الكافيين بعد الساعة 4 عصراً.',ack:true}];
+var TESTS=[{id:'t1',date:'قبل أسبوعين',res:'ملف شخصيتك يميل للتحليل والتنظيم. نقطة القوة: التخطيط. نقطة التطوير: التفويض. راجع التوصيات أدناه.',tips:'جرّب تفويض مهمة واحدة أسبوعياً.'}];
+var COORD=[{c:'السعودية',f:'🇸🇦',n:'منسقة السعودية',h:'9 ص – 9 م بتوقيت الرياض',u:'https://t.me/'},{c:'الكويت',f:'🇰🇼',n:'منسقة الكويت',h:'9 ص – 9 م بتوقيت الكويت',u:'https://t.me/'},{c:'الإمارات',f:'🇦🇪',n:'منسقة الإمارات',h:'10 ص – 8 م بتوقيت دبي',u:'https://t.me/'},{c:'قطر',f:'🇶🇦',n:'منسقة قطر',h:'9 ص – 9 م بتوقيت الدوحة',u:'https://t.me/'},{c:'دول أخرى',f:'🌍',n:'منسقة عامة',h:'حسب التوفر',u:'https://t.me/'}];
+var S={tab:'home',cat:'all',sub:'offers',tg:false,remind:false,hl:false,rate:0,pick:null,paused:matchMedia('(prefers-reduced-motion: reduce)').matches};
+var mq={raf:0,pos:0,hold:false,hov:false,idle:0,last:0,prog:false,down:false,moved:false};
+function stopMq(){cancelAnimationFrame(mq.raf);mq.raf=0}
+function initMq(){
+ stopMq();var el=$('#mq');if(!el)return;
+ var now=function(){return performance.now()};
+ mq.pos=mq.pos||el.scrollWidth/2;el.scrollLeft=-mq.pos;mq.prog=true;mq.last=0;
+ function tick(t){
+  var half=el.scrollWidth/2,max=el.scrollWidth-el.clientWidth,dt=Math.min(50,t-(mq.last||t));mq.last=t;
+  var auto=!S.paused&&!mq.hold&&!mq.hov&&t>mq.idle,wrote=false;
+  if(auto){mq.pos+=0.035*dt;wrote=true}else mq.pos=Math.abs(el.scrollLeft);
+  if(mq.pos>max-2){mq.pos-=half;wrote=true}
+  if(mq.pos<1){mq.pos+=half;wrote=true}
+  if(wrote){mq.prog=true;el.scrollLeft=-mq.pos}
+  mq.raf=requestAnimationFrame(tick)}
+ el.addEventListener('scroll',function(){if(mq.prog){mq.prog=false;return}mq.idle=now()+2500});
+ el.addEventListener('pointerenter',function(e){if(e.pointerType==='mouse')mq.hov=true});
+ el.addEventListener('pointerleave',function(e){if(e.pointerType==='mouse'){mq.hov=false;mq.idle=now()+800}});
+ el.addEventListener('pointerdown',function(e){mq.hold=true;mq.moved=false;if(e.pointerType==='mouse'){mq.down=true;mq.sx=e.clientX;mq.ss=el.scrollLeft}});
+ el.addEventListener('pointermove',function(e){if(!mq.down)return;var dx=e.clientX-mq.sx;if(Math.abs(dx)>5&&!mq.moved){mq.moved=true;el.setPointerCapture(e.pointerId);el.classList.add('drag')}if(mq.moved)el.scrollLeft=mq.ss-dx});
+ function end(){mq.down=false;mq.hold=false;el.classList.remove('drag');mq.idle=now()+2500}
+ el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);
+ el.addEventListener('click',function(e){if(mq.moved){e.stopPropagation();e.preventDefault();mq.moved=false}},true);
+ mq.raf=requestAnimationFrame(tick)}
+var $=function(s){return document.querySelector(s)};
+function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function get(id){return OFFERS.filter(function(o){return o.id===id})[0]}
+function avg(id){var r=REV[id]||[];if(!r.length)return '';var a=r.reduce(function(x,y){return x+y.s},0)/r.length;return '<span class="star">★ '+a.toFixed(1)+'</span> <small>('+r.length+')</small>'}
+function subbed(id){return SUBS.some(function(s){return s.id===id})}
+function unread(){return NOTES.filter(function(n){return !n.ack}).length}
+function toast(m){var t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(function(){t.style.display='none'},2600)}
+
+function card(o){return '<article class="card" tabindex="0" data-act="open" data-id="'+o.id+'"><div class="glow"></div><span class="tag">'+CATS[o.cat].n+'</span><h3>'+o.t+'</h3><p class="desc">'+o.d+'</p><div class="meta"><span class="pill">'+o.m+'</span><span class="pill price">السعر: '+o.p+'</span>'+(subbed(o.id)?'<span class="pill ok">مشترك ✓</span>':'')+avg(o.id)+'</div></article>'}
+
+function home(){
+ var feat=OFFERS.filter(function(o){return ['c1','k1','s1','t1','c2','k2'].indexOf(o.id)>-1}).map(card).join('');
+ var cats=Object.keys(CATS).map(function(k){var n=OFFERS.filter(function(o){return o.cat===k}).length;return '<button class="cat" data-act="cat" data-id="'+k+'"><span>'+CATS[k].i+'</span><b>'+CATS[k].n+'</b><br><small>'+n+' عروض</small></button>'}).join('');
+ var nxt=S.remind?'سنذكّرك على تيليجرام قبل الموعد.':'فعّل التذكير ليوصلك على تيليجرام.';
+ return '<section class="hero"><h1>أهلاً بك 👋</h1><p>كل عروضك واشتراكاتك ونتائجك في مكان واحد.</p></section>'+
+ '<div class="row"><h2>العروض السنوية</h2><button class="chip" id="mqb" data-act="mq">'+(S.paused?'▶ تشغيل':'⏸ إيقاف')+'</button></div><p class="desc" style="margin:-4px 0 6px;font-size:12px">اسحب البطاقات بإصبعك لتحريكها، أو اضغط إيقاف.</p><div class="carousel" id="mq"><div class="track">'+feat+'<span aria-hidden="true" style="display:contents">'+feat.replace(/tabindex="0"/g,'tabindex="-1"')+'</span></div></div>'+
+ '<h2>تصفّح حسب الفئة</h2><div class="cats">'+cats+'</div>'+
+ '<h2>التالي عليك</h2><div class="panel"><div class="row"><h3>إعادة اختبار القلق والتوتر</h3><span class="pill">بعد 12 يوم</span></div><p>'+nxt+'</p><button class="btn block" data-act="goto" data-id="mine:tests">افتح الاختبارات</button></div>'+
+ '<h2>كيف أشترك؟</h2><div class="panel"><ol class="steps"><li>اختر العرض اللي يناسبك واقرأ تفاصيله.</li><li>تواصل مع منسقة بلدك على تيليجرام.</li><li>تؤكد لك المنسقة الاشتراك ويظهر عندك هنا.</li></ol><button class="btn primary block" data-act="goto" data-id="help">تواصل مع المنسقة</button></div>'}
+
+function offers(){
+ var seg=['all'].concat(Object.keys(CATS)).map(function(k){return '<button class="'+(S.cat===k?'on':'')+'" data-act="cat" data-id="'+k+'">'+(k==='all'?'الكل':CATS[k].n)+'</button>'}).join('');
+ var list=OFFERS.filter(function(o){return S.cat==='all'||o.cat===S.cat}).map(card).join('');
+ return '<div class="seg">'+seg+'</div>'+list}
+
+function mine(){
+ var seg=[['offers','عروضي'],['sessions','الجلسات'],['tests','الاختبارات']].map(function(x){return '<button class="'+(S.sub===x[0]?'on':'')+'" data-act="sub" data-id="'+x[0]+'">'+x[1]+(x[0]==='sessions'&&unread()?' ('+unread()+')':'')+'</button>'}).join('');
+ var b='';
+ if(S.sub==='offers'){
+  b=SUBS.map(function(s){var o=get(s.id);return '<div class="panel"><span class="tag">'+CATS[o.cat].n+'</span><h3 style="margin-top:8px">'+o.t+'</h3><div class="bar"><i style="width:'+s.prog+'%"></i></div><p>'+s.l+'</p><div class="row"><button class="btn" data-act="open" data-id="'+o.id+'">تفاصيل</button><button class="btn primary" data-act="open" data-id="'+o.id+'" data-hl="1">قيّم أو أرسل ملاحظة</button></div></div>'}).join('')}
+ if(S.sub==='sessions'){
+  b='<div class="panel"><span class="tag">الجلسة القادمة</span><h3 style="margin-top:8px">جلسة القلق والضغوط</h3><p>الأحد 11 أكتوبر · 8:00 م</p></div><h2 style="margin-top:6px">ملاحظات المختص</h2><p class="desc">اقرأ كل ملاحظة وأكّد قراءتك. لا تتخطاها.</p>'+
+  NOTES.map(function(n,i){return '<div class="note'+(n.ack?' done':'')+'"><b>'+(n.ack?'✓ تمت القراءة':'⚠ ملاحظة مهمة')+'</b><p style="margin:4px 0 8px;color:var(--text)">'+n.t+'</p>'+(n.ack?'':'<button class="btn block" data-act="ack" data-id="'+i+'">قرأتها وفهمتها</button>')+'</div>'}).join('')}
+ if(S.sub==='tests'){
+  b=TESTS.map(function(t){var o=get(t.id);return '<div class="panel"><span class="tag">مكتمل · '+t.date+'</span><h3 style="margin-top:8px">'+o.t+'</h3><p>نتيجتك من المختص:</p><div class="note done"><p style="margin:0;color:var(--text)">'+t.res+'</p></div><p>💡 '+t.tips+'</p><button class="btn" data-act="open" data-id="'+o.id+'" data-hl="1">قيّم أو أرسل ملاحظة</button></div>'}).join('')+
+  '<div class="panel"><span class="tag">بانتظارك</span><h3 style="margin-top:8px">اختبار القلق والتوتر</h3><p>يُعاد كل شهرين · الموعد القادم بعد 12 يوم</p><div class="row"><span style="font-size:14px">ذكّرني على تيليجرام قبل الموعد بأسبوع</span><button class="sw" role="switch" aria-checked="'+S.remind+'" aria-label="تذكير تيليجرام" data-act="remind"></button></div><div style="margin-top:12px"><button class="btn primary block" data-act="goto" data-id="help">اطلب موعد الاختبار</button></div></div>'}
+ return '<div class="seg">'+seg+'</div>'+b}
+
+function help(){
+ var co=COORD.map(function(c,i){return '<div class="panel'+(S.pick===i?' hl':'')+'"><div class="co"><span class="fl">'+c.f+'</span><div><b>'+c.n+'</b><br><small>'+c.h+'</small></div><a class="btn primary" href="'+c.u+'" target="_blank" rel="noopener">تيليجرام</a></div></div>'}).join('');
+ return '<section class="hero"><h1>تواصل مع المنسقة</h1><p>الاشتراك والاستفسار يتم بشكل خاص على تيليجرام مع منسقة بلدك.</p></section>'+
+ '<h2>الخطوات</h2><div class="panel"><ol class="steps"><li>اختر منسقة بلدك من القائمة.</li><li>اضغط «تيليجرام» وابعث لها اسم العرض اللي تبغاه.</li><li>تجاوبك على استفسارك وتشرح لك طريقة الدفع.</li><li>بعد تأكيد الاشتراك يظهر العرض في «اشتراكاتي».</li></ol></div>'+
+ '<h2>المنسقات</h2>'+co+
+ '<h2>بوت التذكيرات</h2><div class="panel"><h3>اربط حسابك بالبوت</h3><p>يوصلك تنبيه قبل موعد الاختبارات والجلسات، وإشعار لما يضيف المختص ملاحظة جديدة.</p><button class="btn '+(S.tg?'':'primary')+' block" data-act="tg">'+(S.tg?'✓ مربوط — اضغط لإلغاء الربط':'ربط تيليجرام')+'</button></div>'}
+
+function render(){
+ $('#view').innerHTML={home:home,offers:offers,mine:mine,help:help}[S.tab]();
+ var T=[['home','🏠','الرئيسية'],['offers','🗂️','العروض'],['mine','⭐','اشتراكاتي'],['help','💬','المنسقات']];
+ $('#nav').innerHTML=T.map(function(t){return '<button class="'+(S.tab===t[0]?'on':'')+'" data-act="goto" data-id="'+t[0]+'"><span>'+t[1]+'</span>'+t[2]+(t[0]==='mine'&&unread()?'<i class="badge">'+unread()+'</i>':'')+'</button>'}).join('');
+ if(S.tab==='home')initMq();else stopMq();
+ $('#tgdot').className='dot'+(S.tg?'':' off');$('#tgtxt').textContent='تيليجرام: '+(S.tg?'مربوط':'غير مربوط');
+}
+
+function openSheet(id,hl){
+ var o=get(id),R=REV[id]||[];S.rate=0;
+ var revs=R.length?R.map(function(r){return '<div class="rev"><span class="star">'+'★'.repeat(r.s)+'</span> <b>'+esc(r.n)+'</b><br><small>'+esc(r.t)+'</small></div>'}).join(''):'<p class="desc">لا توجد تقييمات بعد. كن أول من يقيّم.</p>';
+ var ctaSub=subbed(id)?'<span class="pill ok">أنت مشترك في هذا العرض ✓</span>':'<button class="btn primary block" data-act="subscribe">اشترك عبر المنسقة</button>';
+ $('#sheet').innerHTML='<div class="grab"></div><span class="tag">'+CATS[o.cat].n+'</span><h2 style="margin:8px 0 4px">'+o.t+'</h2><p class="desc">'+o.d+'</p><div class="meta"><span class="pill">'+o.m+'</span><span class="pill price">السعر: '+o.p+'</span>'+avg(id)+'</div>'+
+ '<h2>ماذا يشمل؟</h2><ul style="margin:0;padding-inline-start:20px;color:var(--muted)">'+o.pts.map(function(p){return '<li>'+p+'</li>'}).join('')+'</ul><div style="margin:14px 0">'+ctaSub+'</div>'+
+ '<h2 id="rv">آراء المشتركين</h2>'+revs+
+ '<h2>قيّم العرض</h2><div class="stars" id="stars">'+[1,2,3,4,5].map(function(n){return '<button data-act="star" data-id="'+n+'" aria-label="'+n+' نجوم">★</button>'}).join('')+'</div><textarea id="rtxt" placeholder="رأيك يظهر للجميع"></textarea><button class="btn block" data-act="pub" data-id="'+id+'">نشر التقييم</button>'+
+ '<h2>ملاحظة خاصة للمختص</h2><p class="desc">لا تظهر لأحد غيره.</p><textarea id="ftxt" placeholder="اكتب ملاحظتك أو اقتراحك"></textarea><button class="btn block" data-act="fb">إرسال الملاحظة</button>';
+ $('#ov').classList.add('show');$('#sheet').scrollTop=0;
+ if(hl){var r=$('#rv');if(r)r.scrollIntoView()}
+}
+function closeSheet(){$('#ov').classList.remove('show')}
+
+function act(el){
+ var a=el.dataset.act,id=el.dataset.id;
+ if(a==='open')openSheet(id,el.dataset.hl);
+ else if(a==='goto'){closeSheet();var p=id.split(':');S.tab=p[0];if(p[1])S.sub=p[1];render();scrollTo(0,0)}
+ else if(a==='cat'){S.cat=id;S.tab='offers';render();scrollTo(0,0)}
+ else if(a==='sub'){S.sub=id;render()}
+ else if(a==='ack'){NOTES[+id].ack=true;toast('تم تأكيد قراءة الملاحظة');render()}
+ else if(a==='remind'){if(!S.tg){toast('اربط تيليجرام أولاً لتصلك التذكيرات');S.tab='help';render();return}S.remind=!S.remind;toast(S.remind?'تم تفعيل التذكير':'تم إيقاف التذكير');render()}
+ else if(a==='tg'){S.tg=!S.tg;if(!S.tg)S.remind=false;toast(S.tg?'تم ربط حسابك بالبوت (تجريبي)':'تم إلغاء الربط');render()}
+ else if(a==='subscribe'){closeSheet();S.tab='help';S.pick=0;render();scrollTo(0,0);toast('اختر منسقة بلدك وأرسل لها اسم العرض')}
+ else if(a==='star'){S.rate=+id;[].forEach.call(document.querySelectorAll('#stars button'),function(b,i){b.classList.toggle('on',i<S.rate)})}
+ else if(a==='pub'){var t=$('#rtxt').value.trim();if(!S.rate){toast('اختر عدد النجوم أولاً');return}(REV[id]=REV[id]||[]).unshift({n:'أنت',s:S.rate,t:t||'—'});toast('تم نشر تقييمك');openSheet(id,1);render()}
+ else if(a==='fb'){if(!$('#ftxt').value.trim()){toast('اكتب ملاحظتك أولاً');return}$('#ftxt').value='';toast('وصلت ملاحظتك للمختص')}
+ else if(a==='mq'){S.paused=!S.paused;mq.idle=0;$('#mqb').textContent=S.paused?'▶ تشغيل':'⏸ إيقاف'}
+ else if(a==='theme'){setTheme(document.documentElement.dataset.theme==='light'?'dark':'light')}
+}
+function setTheme(m){document.documentElement.dataset.theme=m;$('#thl').textContent=m==='light'?'فاتح':'دارك';try{localStorage.setItem('theme',m)}catch(e){}}
+document.addEventListener('click',function(e){var el=e.target.closest('[data-act]');if(el&&!(el.tagName==='A')){act(el)}else if(e.target.id==='ov')closeSheet()});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeSheet();if(e.key==='Enter'&&e.target.matches('article[data-act]'))act(e.target)});
+var saved=null;try{saved=localStorage.getItem('theme')}catch(e){}
+setTheme(saved||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'));
+render();
+</script>
+</body>
+</html>
+
