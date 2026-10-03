@@ -101,6 +101,14 @@ select.in option{color:#000}
 .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 8px;margin-bottom:6px}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .up{color:var(--green)!important}.dn{color:#EF4444!important}
+.pill.warn{border-color:rgba(251,191,36,.6);background:rgba(251,191,36,.12)}
+.dis{opacity:.5}
+.plist{display:flex;flex-direction:column;gap:6px;max-height:210px;overflow-y:auto;margin:6px 0}
+.po{display:flex;justify-content:space-between;align-items:center;gap:8px;text-align:right;border:1px solid var(--stroke);background:var(--fill);border-radius:12px;padding:10px 12px;font-size:14px;color:var(--text)}
+.po small{color:var(--muted);font-size:12px;flex:none}
+.po.on{border-color:rgba(45,212,255,.8);background:rgba(45,212,255,.14)}
+.pr{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--stroke);cursor:pointer}
+details{margin-top:8px}summary{cursor:pointer;color:var(--blue);font-size:14px;padding:4px 0}
 </style>
 </head>
 <body>
@@ -124,13 +132,13 @@ var DB = window.MiniAppDB ? window.MiniAppDB.load() : null;
 var CATS = {coach:'كوتشينغ',course:'كورسات تطويرية',session:'جلسات نفسية',test:'اختبارات تقييم'};
 
 var OF = (DB && DB.offers) ? DB.offers.map(function(o){
-  return { id: o.id, cat: o.cat, t: o.t, p: o.p, d: o.d, vis: o.vis!==false, feat: !!o.feat, g: !!o.hasGroup, bot: !!o.botLinked, groupName: o.groupName||'' };
+  return { id: o.id, cat: o.cat, t: o.t, p: o.p, d: o.d, vis: o.vis!==false, feat: !!o.feat, g: !!o.hasGroup, bot: !!o.botLinked, groupName: o.groupName||'', st: o.subType||'', seats: o.seats||'', maxSeats: o.maxSeats||null, m: o.m||'' };
 }) : [
   ['c1','coach','كوتشينغ التواصل',false],['c2','coach','كوتشينغ البزنس',false],['c3','coach','كوتشينغ الحياة',true],
   ['k1','course','إدارة الوقت والتركيز',true],['k2','course','بناء الثقة بالنفس',true],['k3','course','مهارات القيادة',true],
   ['s1','session','جلسة القلق والضغوط',false],['s2','session','جلسة العلاقات',false],['s3','session','التعافي من الاحتراق',false],
   ['t1','test','اختبار الشخصية',false],['t2','test','اختبار القلق والتوتر',false],['t3','test','اختبار الاحتراق الوظيفي',false]
-].map(function(a){return{id:a[0],cat:a[1],t:a[2],p:'00$',d:'وصف مختصر للعرض.',vis:true,feat:['c1','k1','s1','t1'].indexOf(a[0])>-1,g:a[3],bot:a[0]!=='k3',groupName:'قروب المشتركين'}});
+].map(function(a){return{id:a[0],cat:a[1],t:a[2],p:'00$',d:'وصف مختصر للعرض.',vis:true,feat:['c1','k1','s1','t1'].indexOf(a[0])>-1,g:a[3],bot:a[0]!=='k3',groupName:'قروب المشتركين',st:({c1:'فردي',c2:'فردي',c3:'جماعي'})[a[0]]||'',seats:'',maxSeats:null,m:''}});
 
 var CL = [
 {id:1,n:'نورة ع.',u:'@noura',f:'🇸🇦',since:'مارس 2026',subs:[{o:'c1',l:'الجلسة 3 من 6',p:50},{o:'k1',l:'4 من 10 دروس',p:40}],notes:[{t:'لا تتخطي تمرين التنفس اليومي.',ack:false,d:'قبل 3 أيام'}],tests:[{o:'t1',st:'done',res:'ميل للتحليل والتنظيم، ونقطة التطوير التفويض.'},{o:'t2',st:'wait',when:'أنجزته أمس'}]},
@@ -157,6 +165,10 @@ var COORD = [
   ['🇶🇦','منسقة قطر','@qa_coord',false]
 ];
 
+var PERMS = (DB && DB.perms) || {};
+COORD.forEach(function(c){var k=c[2].replace('@','');if(!PERMS[k])PERMS[k]={add:true,edit:true,hide:false,del:false}});
+var PK = [['add','إضافة العروض'],['edit','تعديل العروض'],['hide','إخفاء العروض'],['del','حذف العروض']];
+
 var TPL = (DB && DB.templates) || [
   ['تذكير الاختبار','اقترب موعد إعادة اختبارك. جاهز تبدأ؟'],
   ['ملاحظة جديدة','وصلتك ملاحظة جديدة من المختص، افتحها واقرأها.'],
@@ -171,7 +183,7 @@ var LOG = [], AC = [49,58,12], TD = [17,21,3];
 (function(){var q=0;Object.keys(CNT).forEach(function(id){CNT[id].forEach(function(n,m){for(var j=0;j<n;j++){LOG.push({o:id,f:FL[q%7],m:m,rn:q%5===0});q++}})})})();
 
 var RT = {c1:[4.8,23],c2:[4.6,14],c3:[4.5,9],k1:[4.7,31],k2:[4.4,18],k3:[4.2,7],s1:[4.9,19],s2:[4.6,8],s3:[4.5,6],t1:[4.7,26],t2:[4.3,15],t3:[4.4,9]};
-var S = {tab:'today',q:'',oq:'',cat:'all',sub:'reviews',ft:'all',fc:'all',fs:'all',rp:'perf',sort:'subs',mo:1};
+var S = {tab:'today',coachType:'all',ccat:'all',ctype:'all',rg:{cat:'',type:'',o:''},q:'',oq:'',cat:'all',sub:'reviews',ft:'all',fc:'all',fs:'all',rp:'perf',sort:'subs',mo:1};
 
 var $ = function(s){return document.querySelector(s)};
 function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML}
@@ -182,14 +194,27 @@ function waits(){var r=[];CL.forEach(function(c){c.tests.forEach(function(t,i){i
 function unread(){var r=[];CL.forEach(function(c){c.notes.forEach(function(n){if(!n.ack)r.push({c:c,n:n})})});return r}
 function sw(on,act,id){return '<button class="sw" role="switch" aria-checked="'+on+'" data-act="'+act+'" data-id="'+id+'"></button>'}
 
+var LOCALSUBS=[];
+function chips(arr,cur,act){return '<div class="seg">'+arr.map(function(x){return '<button class="'+(cur===x[0]?'on':'')+'" data-act="'+act+'" data-id="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div>'}
+function coachTypes(){var t=['فردي','جماعي'];if(OF.some(function(x){return x.st==='باكج'}))t.push('باكج');return t}
+function dbSubs(){return (window.MiniAppDB&&window.MiniAppDB.load().subs)||LOCALSUBS}
+function stOf(u,id){var r=dbSubs().filter(function(s){return s.o===id&&String(s.u).toLowerCase()===String(u).toLowerCase()})[0];var x=o(id);return r?r.st:(x&&x.g?'joined':'none')}
+function cByU(u){return CL.filter(function(c){return String(c.u).toLowerCase()===String(u).toLowerCase()})[0]}
+(function(){dbSubs().forEach(function(s){var c=cByU(s.u);if(!c){c={id:100+CL.length,n:s.n,u:s.u,f:'🌍',since:s.d||'',subs:[],notes:[],tests:[]};CL.push(c)}if(!c.subs.some(function(x){return x.o===s.o}))c.subs.push({o:s.o,l:s.l||'',p:s.prog||0})})})();
+function people(id){return CL.filter(function(c){return c.subs.some(function(s){return s.o===id})||c.tests.some(function(t){return t.o===id})})}
+function waitingFor(id){var r=[];CL.forEach(function(c){c.tests.forEach(function(t,i){if(t.o===id&&t.st==='wait')r.push({c:c,i:i,t:t})})});return r}
+function stBadge(st){return {joined:'<span class="pill ok">دخل القروب 🟢</span>',sent:'<span class="pill" style="border-color:var(--blue)">أُرسل الرابط 🔵</span>',pending:'<span class="pill warn">بانتظار الرابط</span>',failed:'<span class="pill warn">تعذّر الإرسال 🔴</span>'}[st]||''}
 function syncDB(){
-  if(window.MiniAppDB){
-    var db = window.MiniAppDB.load();
-    db.pendingReviews = PEND;
-    db.privNotes = PRIV;
-    db.templates = TPL;
-    window.MiniAppDB.save(db);
-  }
+  if(!window.MiniAppDB) return;
+  var db = window.MiniAppDB.load();
+  db.pendingReviews = PEND; db.privNotes = PRIV; db.templates = TPL; db.perms = PERMS;
+  db.offers = db.offers || [];
+  OF.forEach(function(x){
+    var b = db.offers.filter(function(y){return y.id===x.id})[0];
+    if(!b){ b={id:x.id,pts:[],m:x.m||'',seats:x.seats||'',maxSeats:x.maxSeats||null}; db.offers.push(b); }
+    b.cat=x.cat; b.t=x.t; b.p=x.p; b.d=x.d; b.vis=x.vis; b.feat=x.feat; b.hasGroup=x.g; b.botLinked=x.bot; b.groupName=x.groupName; b.subType=x.st||b.subType||'';
+  });
+  window.MiniAppDB.save(db);
 }
 
 function checkAdminBotUser(u){
@@ -209,72 +234,63 @@ function checkAdminBotUser(u){
 function today(){
  var w=waits(),u=unread();
  return '<div class="stats"><div class="stat"><b>'+w.length+'</b><small>اختبارات تنتظر نتيجتك</small></div><div class="stat"><b>'+u.length+'</b><small>ملاحظات لم تُقرأ</small></div><div class="stat"><b>'+PEND.length+'</b><small>تقييمات للمراجعة</small></div></div>'+
- '<div style="margin:12px 0"><button class="btn primary block" data-act="addsub">＋ إضافة اشتراك لعميل</button></div>'+
+ '<div style="margin:12px 0"><button class="btn primary block" data-act="addsub">＋ تسجيل اشتراك جديد</button></div>'+
  '<h2>اختبارات تنتظر نتيجتك</h2>'+(w.length?w.map(function(x){return '<div class="panel"><div class="row"><div><b>'+x.c.n+'</b><br><small class="lbl">'+o(x.t.o).t+' · '+x.t.when+'</small></div><button class="btn primary sm" data-act="res" data-id="'+x.c.id+'" data-i="'+x.i+'">اكتب النتيجة</button></div></div>'}).join(''):'<p class="desc">ما فيه اختبارات معلّقة. كل شيء تم.</p>')+
  '<h2>ملاحظات لم يقرأها العميل</h2>'+(u.length?u.map(function(x){return '<div class="note"><b>'+x.c.n+' · '+x.n.d+'</b><p style="margin:4px 0 8px;color:var(--text)">'+esc(x.n.t)+'</p><button class="btn sm" data-act="nudge" data-id="'+x.c.id+'">ذكّره على تيليجرام</button></div>'}).join(''):'<p class="desc">الكل قرأ ملاحظاته.</p>')+
  '<h2>التقييمات</h2><div class="panel"><div class="row"><span>'+PEND.length+' تقييمات تنتظر موافقتك</span><button class="btn sm" data-act="go" data-id="inbox">راجعها</button></div></div>'+
  '<div class="panel"><h3>المواعيد والحجوزات</h3><p>تصلك على بوت الحجز في تيليجرام، وما تظهر في هذه اللوحة.</p><a class="btn block" href="https://t.me/" target="_blank" rel="noopener">فتح بوت الحجز</a></div>'}
 
-function clients(){return '<input class="in" id="q" type="search" placeholder="ابحث باسم العميل أو اليوزرنيم" value="'+esc(S.q)+'"><div id="cl">'+clist()+'</div>'}
+function clients(){
+ var seg=chips([['all','الكل']].concat(Object.keys(CATS).map(function(k){return [k,CATS[k]]})),S.ccat,'ccat');
+ var ct=S.ccat==='coach'?chips([['all','كل الكوتشينغ']].concat(coachTypes().map(function(t){return [t,t]})),S.ctype,'ctype'):'';
+ return '<input class="in" id="q" type="search" placeholder="ابحث باسم العرض أو اليوزر" aria-label="بحث" value="'+esc(S.q)+'">'+seg+ct+'<div id="cl">'+clist()+'</div>'}
+function cofs(){
+ var q=S.q.trim().toLowerCase();
+ return OF.filter(function(x){
+  if(S.ccat!=='all'&&x.cat!==S.ccat) return false;
+  if(S.ccat==='coach'&&S.ctype!=='all'&&x.st!==S.ctype) return false;
+  if(!q) return true;
+  return x.t.toLowerCase().indexOf(q)>-1||people(x.id).some(function(c){return c.n.toLowerCase().indexOf(q)>-1||String(c.u).toLowerCase().indexOf(q)>-1});
+ });
+}
 function clist(){
-  var r=CL.filter(function(c){return (c.n.indexOf(S.q)>-1 || (c.u&&c.u.indexOf(S.q)>-1))});
-  return r.length?r.map(function(c){
-    var un=c.notes.filter(function(n){return !n.ack}).length;
-    return '<div class="panel" style="cursor:pointer" tabindex="0" data-act="cl" data-id="'+c.id+'"><div class="row"><div><b>'+c.f+' '+c.n+' ('+esc(c.u||'@user')+')</b><br><small class="lbl">'+c.subs.length+' اشتراكات · منذ '+c.since+'</small></div>'+(un?'<span class="pill">ملاحظات غير مقروءة: '+un+'</span>':'')+'</div></div>';
-  }).join(''):'<p class="desc">ما لقينا عميل بهذا الاسم أو اليوزر.</p>';
+ var r=cofs(),n=0,gl=0,gt=0,w=0;
+ r.forEach(function(x){n+=people(x.id).length;if(x.g){gt++;if(x.bot)gl++}w+=waitingFor(x.id).length});
+ var lb={all:'عدد العروض',coach:'عدد الكوتشينغات',course:'عدد الكورسات',session:'عدد الجلسات',test:'عدد الاختبارات'}[S.ccat];
+ var third=S.ccat==='test'?['⏳ '+w,'ينتظرون نتيجة']:(gt?[gl+' / '+gt,'قروبات مرتبطة بالبوت']:[w,'ينتظرون نتيجة']);
+ var st='<div class="stats" style="margin:4px 0 12px"><div class="stat"><b>'+r.length+'</b><small>'+lb+'</small></div><div class="stat"><b>'+n+'</b><small>اشتراكات</small></div><div class="stat"><b style="font-size:20px">'+third[0]+'</b><small>'+third[1]+'</small></div></div>';
+ return st+(r.length?r.map(function(x){
+  var np=people(x.id).length,wt=waitingFor(x.id).length;
+  return '<div class="panel" style="cursor:pointer" tabindex="0" data-act="ofp" data-id="'+x.id+'"><span class="tag">'+CATS[x.cat]+(x.st?' · '+x.st:'')+'</span><h3 style="margin:6px 0">'+esc(x.t)+'</h3><div style="display:flex;gap:6px;flex-wrap:wrap"><span class="pill">👥 '+np+' مشترك</span>'+(x.g?'<span class="pill '+(x.bot?'ok':'warn')+'">'+(x.bot?'قروب مرتبط بالبوت ✓':'قروب غير مرتبط ⚠️')+'</span>':'')+(wt?'<span class="pill warn">⏳ '+wt+' ينتظر نتيجة</span>':'')+'</div></div>';
+ }).join(''):'<p class="desc">ما لقينا نتائج بهذا البحث.</p>');
+}
+function ofpSheet(id){
+ var x=o(id),pp=people(id),w=waitingFor(id);
+ var row=function(c,badge){return '<div class="pr" data-act="cl" data-id="'+c.id+'"><div><b>'+esc(c.n)+'</b> <small class="lbl" dir="ltr">'+esc(c.u||'')+'</small></div>'+(badge||'')+'</div>'};
+ var b='';
+ if(x.g){
+  var j=pp.filter(function(c){return stOf(c.u,id)==='joined'}).length;
+  b='<div class="panel"><h3>👥 القروبات</h3><p>قروبات مرتبطة بالبوت: <b>'+(x.bot?1:0)+'</b> من 1</p>'+
+   '<div class="row"><div><b>'+esc(x.groupName||('قروب '+x.t))+'</b><br><small class="lbl">دخلوا: '+j+' من '+pp.length+'</small></div><span class="pill '+(x.bot?'ok':'warn')+'">'+(x.bot?'مرتبط بالبوت ✓':'غير مرتبط')+'</span></div>'+
+   '<details><summary>المزيد: يوزرات القروب ('+pp.length+')</summary>'+(pp.length?pp.map(function(c){return row(c,stBadge(stOf(c.u,id)))}).join(''):'<p class="desc">لا يوجد أعضاء بعد.</p>')+'</details>'+
+   '<div style="margin-top:10px"><button class="btn primary sm" data-act="toggleBotGroup" data-id="'+x.id+'">'+(x.bot?'إلغاء ربط البوت من القروب':'ربط البوت بالقروب كأدمن 🔗')+'</button></div><p style="font-size:12px;color:var(--muted);margin:8px 0 0">الأدمن فقط هو اللي يضيف البوت للقروب ويربطه بالعرض.</p></div>';
+ } else {
+  b='<h2>المشتركون ('+pp.length+')</h2><div class="panel">'+(pp.length?pp.map(function(c){return row(c)}).join(''):'<p class="desc" style="margin:0">لا يوجد مشتركون بعد.</p>')+'</div>';
+  if(x.cat==='test') b+='<h2>ينتظرون نتيجة الاختبار ('+w.length+')</h2><div class="panel">'+(w.length?w.map(function(y){return '<div class="row" style="padding:6px 0"><div><b>'+esc(y.c.n)+'</b> <small class="lbl" dir="ltr">'+esc(y.c.u||'')+'</small><br><small class="lbl">'+esc(y.t.when||'')+'</small></div><button class="btn primary sm" data-act="res" data-id="'+y.c.id+'" data-i="'+y.i+'">اكتب النتيجة</button></div>'}).join(''):'<p class="desc" style="margin:0">ما فيه أحد ينتظر نتيجة.</p>')+'</div>';
+ }
+ sheet('<span class="tag">'+CATS[x.cat]+(x.st?' · '+x.st:'')+'</span><h2 style="margin:6px 0 8px">'+esc(x.t)+'</h2>'+b+'<div style="margin-top:12px"><button class="btn block" data-act="close">إغلاق</button></div>');
 }
 
 function offers(){
- var seg=['all'].concat(Object.keys(CATS)).map(function(k){return '<button class="'+(S.cat===k?'on':'')+'" data-act="cat" data-id="'+k+'">'+(k==='all'?'الكل':CATS[k])+'</button>'}).join('');
- return '<button class="btn primary block" data-act="of" data-id="new">＋ عرض جديد</button><input class="in" id="oq" type="search" placeholder="ابحث باسم العرض" aria-label="بحث في العروض" value="'+esc(S.oq)+'" style="margin-top:12px"><div class="seg">'+seg+'</div><div id="ol">'+olist()+'</div>'}
-
+ var seg=chips([['all','الكل']].concat(Object.keys(CATS).map(function(k){return [k,CATS[k]]})),S.cat,'cat');
+ var ct=S.cat==='coach'?chips([['all','كل الكوتشينغ']].concat(coachTypes().map(function(t){return [t,t]})),S.coachType,'coachType'):'';
+ return '<button class="btn primary block" data-act="of" data-id="new">＋ عرض جديد</button><input class="in" id="oq" type="search" placeholder="ابحث باسم العرض" aria-label="بحث في العروض" value="'+esc(S.oq)+'" style="margin:12px 0 8px">'+seg+ct+'<div id="ol">'+olist()+'</div>'}
 function olist(){
- var r=OF.filter(function(x){return (S.cat==='all'||x.cat===S.cat)&&x.t.indexOf(S.oq)>-1});
+ var r=OF.filter(function(x){return (S.cat==='all'||x.cat===S.cat)&&(S.cat!=='coach'||S.coachType==='all'||x.st===S.coachType)&&x.t.indexOf(S.oq)>-1});
  return r.length?r.map(function(x){
-   var grpInfo = x.g ? '<span class="pill ok">👥 فيه قروب · '+(x.bot?'البوت مربوط ✓':'البوت غير مربوط')+'</span>' : '<span class="pill">بدون قروب (فردي)</span>';
-   return '<div class="panel">'+
-     '<div class="row"><div><span class="tag">'+CATS[x.cat]+'</span> '+grpInfo+'<h3 style="margin-top:6px">'+esc(x.t)+'</h3><small class="lbl">السعر: '+x.p+'</small></div>'+
-     '<div class="row" style="gap:4px">'+
-       '<button class="btn sm" data-act="of" data-id="'+x.id+'">تعديل</button>'+
-       '<button class="btn sm primary" data-act="ofDetails" data-id="'+x.id+'">👥 القروبات والمشتركين</button>'+
-     '</div></div>'+
-     '<div class="row" style="margin-top:10px"><span style="font-size:14px">ظاهر للعملاء</span>'+sw(x.vis,'vis',x.id)+'</div>'+
-     '<div class="row" style="margin-top:8px"><span style="font-size:14px">في الشريط المتحرك</span>'+sw(x.feat,'feat',x.id)+'</div>'+
-   '</div>';
+  return '<div class="panel"><div class="row"><div><span class="tag">'+CATS[x.cat]+(x.st?' · '+x.st:'')+'</span><h3 style="margin-top:6px">'+esc(x.t)+'</h3><small class="lbl">السعر: '+esc(x.p)+'</small></div><div class="row" style="gap:4px"><button class="btn sm" data-act="of" data-id="'+x.id+'">تعديل</button><button class="btn sm" data-act="del" data-id="'+x.id+'">حذف</button></div></div>'+
+  '<div class="row" style="margin-top:10px"><span style="font-size:14px">ظاهر للعملاء</span>'+sw(x.vis,'vis',x.id)+'</div><div class="row" style="margin-top:8px"><span style="font-size:14px">في الشريط المتحرك</span>'+sw(x.feat,'feat',x.id)+'</div></div>';
  }).join(''):'<p class="desc">ما لقينا عرض بهذا الاسم.</p>';
-}
-
-function ofDetailsSheet(id){
-  var x = o(id);
-  var allSubs = (window.MiniAppDB && window.MiniAppDB.load().subs) || [];
-  var offerSubs = allSubs.filter(function(s){ return (s.o === id || s.id === id); });
-  var joinedCount = offerSubs.filter(function(s){ return s.st === 'joined'; }).length;
-
-  var groupSection = x.g ?
-    '<div class="panel"><h3>👥 تفاصيل قروب العرض</h3>'+
-    '<p><b>اسم القروب:</b> '+(x.groupName||'قروب المشتركين')+'</p>'+
-    '<p><b>حالة ربط البوت:</b> <span class="pill '+(x.bot?'ok':'warn')+'">'+(x.bot?'البوت مربوط بالقروب ✓':'البوت غير مربوط بالقروب')+'</span></p>'+
-    '<p style="font-size:13px;color:var(--muted)">ملاحظة: الأدمن فقط هو الذي يستطيع إضافة البوت للقروب وربطه بالعرض بعد ترقيته أدمن.</p>'+
-    '<div style="margin-top:10px"><button class="btn primary sm" data-act="toggleBotGroup" data-id="'+x.id+'">'+(x.bot?'إلغاء ربط البوت من القروب':'ربط البوت بالقروب كأدمن 🔗')+'</button></div></div>' :
-    '<div class="panel"><p>هذا العرض فردي أو جلسة نفسية ولا يرتبط بأي قروبات تيليجرام.</p></div>';
-
-  var usersList = offerSubs.length ? offerSubs.map(function(s){
-    var stBadge = s.st === 'joined' ? '<span class="pill ok">دخل القروب 🟢</span>' :
-      (s.st === 'sent' ? '<span class="pill" style="border-color:var(--blue)">أُرسل الرابط 🔵</span>' : '<span class="pill">بانتظار</span>');
-    return '<div class="row" style="padding:6px 0;border-bottom:1px solid var(--stroke)">'+
-      '<div><b>'+esc(s.n)+'</b> <small class="lbl" dir="ltr">'+esc(s.u||'')+'</small></div>'+
-      stBadge+
-    '</div>';
-  }).join('') : '<p class="desc">لا يوجد مشتركون مسجلون في هذا العرض حتى الآن.</p>';
-
-  sheet('<span class="tag">'+CATS[x.cat]+'</span>'+
-    '<h2 style="margin:6px 0 2px">'+esc(x.t)+'</h2>'+
-    groupSection+
-    '<h2>يوزرنيمز المشتركين بالعرض ('+offerSubs.length+')</h2>'+
-    (x.g ? '<p class="desc">الأعضاء الذين دخلوا القروب: '+joinedCount+' من أصل '+offerSubs.length+'</p>' : '')+
-    '<div class="panel">'+usersList+'</div>'+
-    '<button class="btn block" data-act="close">إغلاق</button>'
-  );
 }
 
 function inbox(){
@@ -325,7 +341,7 @@ function more(){
    return '<div class="note done" style="margin:6px 0"><b>⚡ '+esc(l.time)+'</b><p style="margin:2px 0">'+esc(l.msg)+'</p></div>';
  }).join('')+
  '</div>'+
- '<h2>المنسقات وصلاحياتهن</h2>'+COORD.map(function(c,i){return '<div class="panel"><div class="co"><span class="fl">'+c[0]+'</span><div><b>'+c[1]+'</b><br><small class="lbl">'+c[2]+'</small></div>'+sw(c[3],'co',i)+'</div></div>'}).join('')+
+ '<h2>المنسقات وصلاحياتهن</h2><p class="desc">اضغط على المنسقة لتحديد صلاحياتها.</p>'+COORD.map(function(c,i){var p=PERMS[c[2].replace('@','')];return '<div class="panel" style="cursor:pointer" tabindex="0" data-act="coP" data-id="'+i+'"><div class="co"><span class="fl">'+c[0]+'</span><div><b>'+c[1]+'</b><br><small class="lbl">'+c[2]+'</small></div>'+sw(c[3],'co',i)+'</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">'+PK.map(function(k){return '<span class="pill '+(p[k[0]]?'ok':'')+'">'+(p[k[0]]?'✓ ':'🔒 ')+k[1]+'</span>'}).join('')+'</div></div>'}).join('')+
  '<h2>رسائل البوت للعميل</h2>'+TPL.map(function(t,i){return '<div class="panel"><label class="lbl" for="tp'+i+'">'+t[0]+'</label><textarea id="tp'+i+'">'+esc(t[1])+'</textarea></div>'}).join('')+
  '<button class="btn primary block" data-act="savetp">حفظ الرسائل</button>';
 }
@@ -342,26 +358,71 @@ function selOf(id){return '<select class="in" id="'+id+'">'+OF.map(function(x){r
 function clSheet(id){
  var c=cl(id);
  sheet('<h2 style="margin:4px 0">'+c.f+' '+c.n+' ('+esc(c.u||'@user')+')</h2><small class="lbl">عميلة منذ '+c.since+'</small>'+
- '<h2>الاشتراكات</h2>'+(c.subs.map(function(s){return '<div class="panel"><b>'+o(s.o).t+'</b><div class="bar"><i style="width:'+s.p+'%"></i></div><small class="lbl">'+s.l+'</small></div>'}).join('')||'<p class="desc">لا اشتراكات.</p>')+'<button class="btn block" data-act="addsub" data-id="'+c.id+'">＋ إضافة اشتراك لهذا العميل</button>'+
+ '<h2>الاشتراكات</h2>'+(c.subs.map(function(s){return '<div class="panel"><b>'+o(s.o).t+'</b><div class="bar"><i style="width:'+s.p+'%"></i></div><small class="lbl">'+s.l+'</small></div>'}).join('')||'<p class="desc">لا اشتراكات.</p>')+'<button class="btn block" data-act="addsub" data-id="'+c.id+'">＋ تسجيل اشتراك جديد</button>'+
  '<h2>الملاحظات</h2>'+(c.notes.map(function(n){return '<div class="note'+(n.ack?' done':'')+'"><b>'+(n.ack?'✓ قرأها العميل':'⚠ لم تُقرأ بعد')+' · '+n.d+'</b><p style="margin:4px 0 0;color:var(--text)">'+esc(n.t)+'</p></div>'}).join(''))+
  '<textarea id="nt" placeholder="اكتب ملاحظة للعميل"></textarea><label class="chk"><input type="checkbox" id="req" checked> إلزامية، لا يتخطاها العميل</label><button class="btn primary block" data-act="note" data-id="'+c.id+'">إرسال الملاحظة</button>'+
  '<h2>الاختبارات</h2>'+(c.tests.map(function(t,i){return '<div class="panel"><b>'+o(t.o).t+'</b>'+(t.st==='done'?'<p style="margin:4px 0 0">'+esc(t.res)+'</p>':'<p style="margin:4px 0 8px">'+t.when+' · بانتظار نتيجتك</p><button class="btn primary sm" data-act="res" data-id="'+c.id+'" data-i="'+i+'">اكتب النتيجة</button>')+'</div>'}).join('')||'<p class="desc">لا اختبارات.</p>'))}
 
-function resSheet(cid,i){var c=cl(cid),t=c.tests[i];sheet('<span class="tag">'+c.n+'</span><h2 style="margin:8px 0 2px">'+o(t.o).t+'</h2><p class="desc">اكتب النتيجة بصيغة يفهمها العميل.</p><label class="lbl" for="rr">النتيجة</label><textarea id="rr"></textarea><label class="lbl" for="rt">توصية (اختياري)</label><textarea id="rt"></textarea><label class="chk"><input type="checkbox" id="tn" checked> أرسل إشعاراً على تيليجرام</label><button class="btn primary block" data-act="sendres" data-id="'+cid+'" data-i="'+i+'">إرسال النتيجة للعميل</button>')}
+function resSheet(cid,i){var c=cl(cid),t=c.tests[i];sheet('<span class="tag">'+c.n+'</span><h2 style="margin:8px 0 2px">'+o(t.o).t+'</h2><p class="desc">اكتب النتيجة بصيغة يفهمها العميل.</p><label class="lbl" for="rr">النتيجة</label><textarea id="rr"></textarea><label class="lbl" for="rt">توصية (اختياري)</label><textarea id="rt"></textarea><button class="btn primary block" data-act="sendres" data-id="'+cid+'" data-i="'+i+'">إرسال النتيجة للعميل</button>')}
 
-function subSheet(cid){
-  var client = cid ? cl(cid) : CL[0];
-  var initUser = client ? (client.u || '@noura') : '@noura';
-  sheet('<h2 style="margin:4px 0 8px">إضافة اشتراك لعميل</h2>'+
-    '<label class="lbl" for="sc">العميل</label>'+
-    '<select class="in" id="sc">'+CL.map(function(c){return '<option value="'+c.id+'"'+(c.id==cid?' selected':'')+'>'+c.n+'</option>'}).join('')+'</select>'+
-    '<label class="lbl" for="su">يوزر تيليجرام للعميل</label>'+
-    '<input class="in" id="su" placeholder="@username" dir="ltr" value="'+initUser+'">'+
-    '<div id="adminBotCheck" style="font-size:12px;margin:-2px 0 8px"></div>'+
-    '<label class="lbl" for="so">العرض</label>'+selOf('so')+
-    '<label class="lbl" for="sd">تاريخ البداية</label><input class="in" id="sd" type="date">'+
-    '<button class="btn primary block" data-act="savesub">تأكيد الاشتراك</button>');
-  checkAdminBotUser($('#su').value);
+function pickHtml(){
+ var r=S.rg,h='<label class="lbl">الفئة</label>'+chips(Object.keys(CATS).map(function(k){return [k,CATS[k]]}),r.cat,'rcat');
+ if(r.cat==='coach') h+='<label class="lbl">النوع</label>'+chips(coachTypes().map(function(t){return [t,t]}),r.type,'rtype');
+ if(r.cat&&(r.cat!=='coach'||r.type)){
+  var l=OF.filter(function(x){return x.cat===r.cat&&(r.cat!=='coach'||x.st===r.type)}).sort(function(a,b){return a.t.localeCompare(b.t,'ar')});
+  h+='<label class="lbl">العرض (مرتب بالحروف)</label>'+(l.length?'<div class="plist">'+l.map(function(x){return '<button class="po'+(r.o===x.id?' on':'')+'" data-act="rpick" data-id="'+x.id+'"><span>'+esc(x.t)+'</span><small>'+(x.g?(x.bot?'قروب مرتبط بالبوت ✓':'قروب غير مرتبط ⚠️'):'بدون قروب')+' · '+esc(x.p)+'</small></button>'}).join('')+'</div>':'<p class="desc">لا توجد عروض في هذا التصنيف.</p>');
+ }
+ return h;
+}
+function refreshPick(){var p=$('#pick');if(p)p.innerHTML=pickHtml();hint()}
+function hint(){
+ var h=$('#hint');if(!h)return;var x=S.rg.o?o(S.rg.o):null;
+ if(!x)h.textContent='اختر الفئة ثم العرض.';
+ else if(!x.g)h.textContent='هذا العرض بدون قروب، يكفي تسجيل بيانات العميل.';
+ else if(x.bot)h.textContent='هذا العرض فيه قروب ومرتبط بالبوت ✓. بعد التأكيد يوصل رابط الدخول للعميل مباشرة.';
+ else h.textContent='⚠️ قروب هذا العرض غير مرتبط بالبوت. تقدر تسجل العميل، لكن ما راح ينرسل له رابط إلا بعد ما تربطه من صفحة العملاء.';
+}
+function regSheet(cid){
+ var c=cid?cl(cid):null;S.rg={cat:'',type:'',o:''};
+ sheet('<h2 style="margin:4px 0 8px">تسجيل اشتراك جديد</h2><label class="lbl" for="rn">اسم العميل</label><input class="in" id="rn" placeholder="مثال: نورة علي" value="'+(c?esc(c.n):'')+'"><label class="lbl" for="ru">يوزر تيليجرام</label><input class="in" id="ru" placeholder="@username" dir="ltr" value="'+(c?esc(c.u||''):'')+'"><div id="adminBotCheck" style="font-size:12px;margin:-2px 0 8px"></div><div id="pick"></div><p class="desc" id="hint" style="margin-top:6px"></p><button class="btn primary block" data-act="confirmreg">تأكيد وتسجيل الاشتراك</button>');
+ refreshPick();checkAdminBotUser($('#ru').value);
+}
+function confirmReg(){
+ var n=$('#rn').value.trim(),u=$('#ru').value.trim(),x=S.rg.o?o(S.rg.o):null;
+ if(!n||!u){toast('اكتب اسم العميل ويوزره');return}
+ if(!x){toast('اختر العرض أولاً');return}
+ u=u[0]==='@'?u:'@'+u;
+ var ok=window.MiniAppDB?window.MiniAppDB.isBotRegistered(u):false,st='none',ttl='تم تسجيل العميل',ic='✅',N='<b>'+esc(n)+'</b>',T='«'+esc(x.t)+'»',msg;
+ if(!x.g)msg='تم تسجيل العميل '+N+' ('+esc(u)+') في '+T+' بالبيانات المدخلة.';
+ else if(!x.bot){st='pending';ic='⚠️';ttl='تم التسجيل بدون إرسال رابط';msg='تم تسجيل العميل '+N+' في '+T+'، لكن قروب هذا العرض غير مرتبط بالبوت فما انرسل له رابط. اربط البوت بالقروب من صفحة «العملاء»، وبعدها يُرسل الرابط.'}
+ else if(!ok){st='failed';ic='⚠️';ttl='تم التسجيل وتعذّر إرسال الرابط';msg='تم تسجيل العميل '+N+' في '+T+'، لكن اليوزر ما بدأ البوت فتعذّر إرسال الرابط. لازم يسوي «ستارت» للبوت أولاً.'}
+ else{st='sent';msg='تم تسجيل العميل '+N+' في '+T+' وسينرسل له رابط الدخول للقروب من البوت. تحقق من حالته في صفحة «العملاء».'}
+ var c=cByU(u);if(!c){c={id:100+CL.length,n:n,u:u,f:'🌍',since:'الآن',subs:[],notes:[],tests:[]};CL.push(c)}
+ if(!c.subs.some(function(y){return y.o===x.id}))c.subs.push({o:x.id,l:'بدأ الاشتراك',p:0});
+ LOG.push({o:x.id,f:c.f,m:2,rn:false});
+ var rec={id:Date.now(),n:n,u:u,o:x.id,d:'الآن',prog:0,l:'بدأ الاشتراك',st:st};
+ if(window.MiniAppDB){var db=window.MiniAppDB.load();db.subs=db.subs||[];db.subs.unshift(rec);window.MiniAppDB.save(db)}else LOCALSUBS.unshift(rec);
+ render();
+ sheet('<div style="text-align:center;padding:6px 0"><div style="font-size:34px">'+ic+'</div><h2 style="margin:6px 0">'+ttl+'</h2><p class="desc">'+msg+'</p></div><button class="btn primary block" data-act="ofp" data-id="'+x.id+'">عرض في العملاء</button><div style="margin-top:8px"><button class="btn block" data-act="addsub">تسجيل اشتراك آخر</button></div>');
+}
+function addOfSheet(){
+ sheet('<h2 style="margin:4px 0 8px">إضافة عرض جديد</h2><label class="lbl" for="an">اسم العرض</label><input class="in" id="an"><label class="lbl" for="ac">الفئة</label><select class="in" id="ac">'+Object.keys(CATS).map(function(k){return '<option value="'+k+'">'+CATS[k]+'</option>'}).join('')+'</select><div id="adyn"></div><label class="lbl" for="ap">السعر</label><input class="in" id="ap" value="00$"><label class="lbl" for="ad">الوصف</label><textarea id="ad"></textarea><button class="btn primary block" data-act="saveadd">إضافة العرض</button>');
+ addDyn();
+}
+function addDyn(){
+ var ac=$('#ac').value,at=($('#at')||{}).value||'فردي',sm=($('#asm')||{}).value||'limited',cn=($('#acn')||{}).value||'',h='';
+ var N=function(t){return '<div class="note done"><p style="margin:0">'+t+'</p></div>'};
+ if(ac==='coach'){
+  h='<label class="lbl" for="at">نوع الكوتشينغ</label><select class="in" id="at"><option'+(at==='فردي'?' selected':'')+'>فردي</option><option'+(at==='جماعي'?' selected':'')+'>جماعي</option></select>';
+  if(at==='فردي')h+=N('كوتشينغ فردي: مقعد واحد تلقائياً وبدون قروب.');
+  else h+='<label class="lbl" for="asm">المقاعد</label><select class="in" id="asm"><option value="limited"'+(sm==='limited'?' selected':'')+'>عدد محدود</option><option value="open"'+(sm==='open'?' selected':'')+'>غير محدودة</option></select>'+(sm==='limited'?'<label class="lbl" for="acn">عدد المقاعد</label><input class="in" id="acn" type="number" min="1" inputmode="numeric" value="'+esc(cn)+'">':'')+N('كوتشينغ جماعي: له قروب، وتربطه بالبوت من صفحة العملاء.');
+ } else if(ac==='course')h=N('كورس تعليمي: له قروب وبدون حد للمقاعد، وتربطه بالبوت من صفحة العملاء.');
+ else h=N((ac==='session'?'جلسة نفسية':'اختبار تقييم')+': فردي وبدون قروب.');
+ $('#adyn').innerHTML=h;
+}
+function coPSheet(i){
+ var c=COORD[i],p=PERMS[c[2].replace('@','')];
+ sheet('<h2 style="margin:4px 0 2px">'+c[0]+' '+c[1]+'</h2><small class="lbl">'+c[2]+'</small><h2>صلاحيات المنسقة</h2><div class="panel">'+PK.map(function(k){return '<div class="row" style="margin:8px 0"><span style="font-size:14px">'+k[1]+'</span>'+sw(!!p[k[0]],'cperm',i+':'+k[0])+'</div>'}).join('')+'<p style="font-size:12px;color:var(--muted);margin:8px 0 0">تسجيل الاشتراكات وإرسال الروابط متاحة لكل المنسقات دائماً.</p></div><button class="btn block" data-act="close">تم</button>');
 }
 
 function ofSheet(id){var x=id==='new'?{id:'new',cat:'coach',t:'',p:'00$',d:''}:o(id);sheet('<h2 style="margin:4px 0 8px">'+(id==='new'?'عرض جديد':'تعديل العرض')+'</h2><label class="lbl" for="ot">الاسم</label><input class="in" id="ot" value="'+esc(x.t)+'"><label class="lbl" for="oc">الفئة</label><select class="in" id="oc">'+Object.keys(CATS).map(function(k){return '<option value="'+k+'"'+(k===x.cat?' selected':'')+'>'+CATS[k]+'</option>'}).join('')+'</select><label class="lbl" for="op">السعر</label><input class="in" id="op" value="'+esc(x.p)+'"><label class="lbl" for="od">الوصف</label><textarea id="od">'+esc(x.d)+'</textarea><button class="btn primary block" data-act="saveof" data-id="'+id+'">حفظ</button>')}
@@ -369,7 +430,31 @@ function ofSheet(id){var x=id==='new'?{id:'new',cat:'coach',t:'',p:'00$',d:''}:o
 function act(el){
  var a=el.dataset.act,id=el.dataset.id,v=function(s){return $(s).value.trim()};
  if(a==='go'){closeSheet();S.tab=id;render();scrollTo(0,0)}
- else if(a==='cat'){S.cat=id;render()}
+ else if(a==='cat'){S.cat=id;if(id!=='coach')S.coachType='all';render()}
+ else if(a==='coachType'){S.coachType=id;render()}
+ else if(a==='ccat'){S.ccat=id;if(id!=='coach')S.ctype='all';render()}
+ else if(a==='ctype'){S.ctype=id;render()}
+ else if(a==='ofp')ofpSheet(id);
+ else if(a==='confirmreg')confirmReg();
+ else if(a==='rcat'){S.rg={cat:id,type:'',o:''};refreshPick()}
+ else if(a==='rtype'){S.rg.type=id;S.rg.o='';refreshPick()}
+ else if(a==='rpick'){S.rg.o=id;refreshPick()}
+ else if(a==='coP')coPSheet(+id);
+ else if(a==='cperm'){var pp=id.split(':');var k=COORD[+pp[0]][2].replace('@','');PERMS[k][pp[1]]=!PERMS[k][pp[1]];syncDB();coPSheet(+pp[0]);render()}
+ else if(a==='del'){var dx=o(id);sheet('<h2 style="margin:4px 0 8px">حذف العرض؟</h2><p class="desc">سيُحذف «'+esc(dx.t)+'» ولن يظهر للعملاء. هذا الإجراء لا يمكن التراجع عنه.</p><button class="btn primary block" data-act="rmof" data-id="'+id+'">نعم، احذف العرض</button><div style="margin-top:8px"><button class="btn block" data-act="close">إلغاء</button></div>')}
+ else if(a==='rmof'){OF=OF.filter(function(x){return x.id!==id});if(window.MiniAppDB){var dd=window.MiniAppDB.load();dd.offers=(dd.offers||[]).filter(function(x){return x.id!==id});window.MiniAppDB.save(dd)}closeSheet();toast('تم حذف العرض');render()}
+ else if(a==='saveadd'){
+   var an=v('#an'),ac=$('#ac').value,ap=v('#ap');
+   if(!an){toast('اكتب اسم العرض');return}
+   if(!ap){toast('اكتب السعر');return}
+   var at=ac==='coach'?$('#at').value:'',g=(ac==='course'||(ac==='coach'&&at==='جماعي')),seats='',mx=null,m='';
+   if(ac==='coach'&&at==='فردي'){seats='مقعد فردي خاص (كرسي واحد)';mx=1;m='جلسات فردية'}
+   else if(ac==='coach'){m='جلسات جماعية';if($('#asm').value==='limited'){var cc=parseInt($('#acn').value,10);if(!(cc>0)){toast('اكتب عدد المقاعد');return}mx=cc;seats='كراسي محددة ('+cc+' مقعد فقط)'}else seats='مقاعد مفتوحة (غير محدودة)'}
+   else if(ac==='course'){seats='مقاعد مفتوحة (بدون حد)';m='كورس تعليمي'}
+   else m=ac==='session'?'جلسات فردية':'اختبار تقييمي';
+   OF.push({id:'n'+Date.now(),cat:ac,t:an,p:ap,d:v('#ad'),vis:true,feat:false,g:g,bot:false,groupName:g?('قروب '+an):'',st:at,seats:seats,maxSeats:mx,m:m});
+   syncDB();closeSheet();toast(g?'تمت إضافة العرض. اربط القروب بالبوت من صفحة العملاء':'تمت إضافة العرض');render();
+ }
  else if(a==='sub'){S.sub=id;render()}
  else if(a==='close')closeSheet();
  else if(a==='cl')clSheet(id);
@@ -379,53 +464,25 @@ function act(el){
    var t=cl(id).tests[+el.dataset.i];t.st='done';TD[2]++;
    t.res=v('#rr')+($('#rt').value.trim()?' — توصية: '+v('#rt'):'');
    closeSheet();
-   toast($('#tn').checked?'وصلت النتيجة للعميل وإشعار تيليجرام':'وصلت النتيجة للعميل');
+   toast('تم الإرسال بنجاح ✓');
    render();
  }
  else if(a==='nudge')toast('تم إرسال تذكير للعميل على تيليجرام');
- else if(a==='addsub')subSheet(id);
- else if(a==='savesub'){
-   var c=cl($('#sc').value);
-   var userIn = v('#su');
-   if(userIn && userIn[0] !== '@') userIn = '@' + userIn;
-   c.u = userIn || c.u;
-   var offerId = $('#so').value;
-   c.subs.push({o:offerId,l:'بدأ الاشتراك',p:0});
-   LOG.push({o:offerId,f:c.f,m:2,rn:false});
-
-   if(window.MiniAppDB){
-     var db = window.MiniAppDB.load();
-     db.subs = db.subs || [];
-     db.subs.unshift({
-       id: Date.now(),
-       n: c.n,
-       u: userIn || c.u,
-       o: offerId,
-       d: 'الآن',
-       prog: 0,
-       l: 'بدأ الاشتراك',
-       st: o(offerId).g ? 'pending' : 'none'
-     });
-     window.MiniAppDB.save(db);
-   }
-
-   closeSheet();
-   toast('تمت إضافة الاشتراك وسيظهر عند '+c.n);
-   render();
- }
+ else if(a==='addsub')regSheet(id);
  else if(a==='note'){if(!v('#nt')){toast('اكتب الملاحظة أولاً');return}var c=cl(id);c.notes.unshift({t:v('#nt'),ack:false,d:'الآن'});toast('أُرسلت الملاحظة للعميل');clSheet(id);render()}
- else if(a==='of')ofSheet(id);
+ else if(a==='of'){if(id==='new')addOfSheet();else ofSheet(id)}
  else if(a==='ofDetails')ofDetailsSheet(id);
  else if(a==='toggleBotGroup'){
    var x = o(id);
    x.bot = !x.bot;
+   syncDB();
    toast(x.bot ? 'تم ربط البوت بالقروب كأدمن بنجاح ✓' : 'تم فصل ربط البوت من القروب');
-   ofDetailsSheet(id);
+   ofpSheet(id);
    render();
  }
- else if(a==='saveof'){if(!v('#ot')){toast('اكتب اسم العرض');return}if(id==='new'){OF.push({id:'n'+OF.length,cat:$('#oc').value,t:v('#ot'),p:v('#op'),d:v('#od'),vis:true,feat:false,g:false,bot:false})}else{var x=o(id);x.t=v('#ot');x.cat=$('#oc').value;x.p=v('#op');x.d=v('#od')}closeSheet();toast('تم الحفظ');render()}
- else if(a==='vis'){var x=o(id);x.vis=!x.vis;render()}
- else if(a==='feat'){var x=o(id);x.feat=!x.feat;render()}
+ else if(a==='saveof'){if(!v('#ot')){toast('اكتب اسم العرض');return}if(id==='new'){OF.push({id:'n'+OF.length,cat:$('#oc').value,t:v('#ot'),p:v('#op'),d:v('#od'),vis:true,feat:false,g:false,bot:false})}else{var x=o(id);x.t=v('#ot');x.cat=$('#oc').value;x.p=v('#op');x.d=v('#od')}syncDB();closeSheet();toast('تم الحفظ');render()}
+ else if(a==='vis'){var x=o(id);x.vis=!x.vis;syncDB();render()}
+ else if(a==='feat'){var x=o(id);x.feat=!x.feat;syncDB();render()}
  else if(a==='ok'||a==='hide'){
    if(a==='ok'){
      var rv=PEND.filter(function(r){return r.id==id})[0];
@@ -464,16 +521,17 @@ document.addEventListener('click',function(e){var el=e.target.closest('[data-act
 document.addEventListener('input',function(e){
   if(e.target.id==='q'){S.q=e.target.value;$('#cl').innerHTML=clist()}
   if(e.target.id==='oq'){S.oq=e.target.value;$('#ol').innerHTML=olist()}
-  if(e.target.id==='su'){checkAdminBotUser(e.target.value)}
+  if(e.target.id==='ru'){checkAdminBotUser(e.target.value)}
 });
 document.addEventListener('change',function(e){
+  if(['ac','at','asm'].indexOf(e.target.id)>-1&&$('#adyn'))addDyn();
   var f=e.target.dataset&&e.target.dataset.f;if(f){S[f]=e.target.value;render()}
   if(e.target.id==='sc'){
     var chosenCl = cl(e.target.value);
     if(chosenCl && $('#su')){ $('#su').value = chosenCl.u || ''; checkAdminBotUser($('#su').value); }
   }
 });
-document.addEventListener('keydown',function(e){if(e.key==='Escape')closeSheet();if(e.key==='Enter'&&e.target.dataset&&e.target.dataset.act==='cl')act(e.target)});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeSheet();if(e.key==='Enter'&&e.target.dataset&&['cl','ofp','coP'].indexOf(e.target.dataset.act)>-1)act(e.target)});
 var saved=null;try{saved=localStorage.getItem('theme')}catch(e){}
 setTheme(saved||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'));
 render();
