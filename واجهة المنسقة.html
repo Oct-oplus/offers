@@ -103,6 +103,14 @@ select.in option{color:#000}
 .up{color:var(--green)!important}.dn{color:#EF4444!important}
 .pill.warn{border-color:rgba(251,191,36,.6);background:rgba(251,191,36,.12)}
 .dis{opacity:.5}
+.sub-filters{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:8px}
+.sub-filters button{flex:none;border:1px solid var(--stroke);background:var(--fill);border-radius:99px;padding:6px 13px;font-size:13px;color:var(--muted);cursor:pointer}
+.sub-filters button.on{border-color:rgba(45,212,255,.8);background:rgba(45,212,255,.16);color:var(--text);font-weight:700}
+.sub-filters button.sub-active{border-color:rgba(34,197,94,.8);background:rgba(34,197,94,.16);color:var(--green);font-weight:700}
+.plist{display:flex;flex-direction:column;gap:6px;max-height:210px;overflow-y:auto;margin:6px 0}
+.po{display:flex;justify-content:space-between;align-items:center;gap:8px;text-align:right;border:1px solid var(--stroke);background:var(--fill);border-radius:12px;padding:10px 12px;font-size:14px}
+.po small{color:var(--muted);font-size:12px;flex:none}
+.po.on{border-color:rgba(45,212,255,.8);background:rgba(45,212,255,.14)}
 </style>
 </head>
 <body>
@@ -126,19 +134,18 @@ var DB = window.MiniAppDB ? window.MiniAppDB.load() : null;
 var CATS = {coach:'كوتشينغ',course:'كورسات تطويرية',session:'جلسات نفسية',test:'اختبارات تقييم'};
 
 var OF = (DB && DB.offers) ? DB.offers.map(function(o){
-  return { id: o.id, cat: o.cat, t: o.t, g: o.hasGroup ? 1 : 0, p: o.p, d: o.d };
+  return { id:o.id, cat:o.cat, t:o.t, g:o.hasGroup?1:0, p:o.p, d:o.d, m:o.m, pts:o.pts||[], st:o.subType||'', seats:o.seats||'', maxSeats:o.maxSeats||null, groupName:o.groupName||'' };
 }) : [
-  ['c1','coach','كوتشينغ التواصل',0],['c2','coach','كوتشينغ البزنس',0],['c3','coach','كوتشينغ جماعي: الحياة والأهداف',1],
-  ['k1','course','إدارة الوقت والتركيز',1],['k2','course','بناء الثقة بالنفس',1],['k3','course','مهارات القيادة',1],
-  ['s1','session','جلسة القلق والضغوط',0],['s2','session','جلسة العلاقات',0],['s3','session','التعافي من الاحتراق',0],
-  ['t1','test','اختبار الشخصية',0],['t2','test','اختبار القلق والتوتر',0],['t3','test','اختبار الاحتراق الوظيفي',0]
-].map(function(a){return{id:a[0],cat:a[1],t:a[2],g:a[3],p:'00$',d:'وصف مختصر للعرض.'}});
+  ['c1','coach','كوتشينغ التواصل',0,'فردي'],['c2','coach','كوتشينغ البزنس',0,'فردي'],['c3','coach','كوتشينغ جماعي: الحياة والأهداف',1,'جماعي'],
+  ['k1','course','إدارة الوقت والتركيز',1,''],['k2','course','بناء الثقة بالنفس',1,''],['k3','course','مهارات القيادة',1,''],
+  ['s1','session','جلسة القلق والضغوط',0,''],['s2','session','جلسة العلاقات',0,''],['s3','session','التعافي من الاحتراق',0,''],
+  ['t1','test','اختبار الشخصية',0,''],['t2','test','اختبار القلق والتوتر',0,''],['t3','test','اختبار الاحتراق الوظيفي',0,'']
+].map(function(a){return{id:a[0],cat:a[1],t:a[2],g:a[3],st:a[4],p:'00$',d:'وصف مختصر للعرض.',m:'',pts:[],seats:''}});
 
 var ME = {n:'سارة',f:'🇸🇦',c:'السعودية',u:'@sa_coord'};
-var PERM = (DB && DB.perm) || {edit:true,del:false};
-var GR = {c3:{bot:true},k1:{bot:true},k2:{bot:true},k3:{bot:false}};
-
-var SUBS = (DB && DB.subs) || [
+var PERM = Object.assign({edit:true,del:false,add:true}, (DB && DB.perm) || {});
+var GR = (function(){var g={};if(DB&&DB.offers)DB.offers.forEach(function(x){if(x.hasGroup)g[x.id]={bot:!!x.botLinked}});return Object.keys(g).length?g:{c3:{bot:true},k1:{bot:true},k2:{bot:true},k3:{bot:false}}})();
+var ALL = (DB && DB.subs) || [
   {id:1,n:'عبدالله ر.',u:'@abdullah_r',o:'k1',d:'اليوم',st:'pending'},
   {id:2,n:'هند ك.',u:'@hind_k',o:'c3',d:'أمس',st:'sent'},
   {id:3,n:'فهد ع.',u:'@fahad_a',o:'k3',d:'قبل 3 أيام',st:'joined'},
@@ -147,11 +154,20 @@ var SUBS = (DB && DB.subs) || [
   {id:6,n:'نوف ب.',u:'@nouf_b',o:'k3',d:'قبل يومين',st:'pending'},
   {id:7,n:'تركي ع.',u:'@turki_a',o:'k1',d:'قبل يومين',st:'failed'}
 ];
-
-var INQ = [
-  {id:1,n:'ريم س.',u:'@reem_s',q:'كم مدة الكورس وهل فيه شهادة؟',o:'k2',t:'قبل ساعة',done:false},
-  {id:2,n:'سلمان ح.',u:'@salman_h',q:'وش الفرق بين كوتشينغ التواصل والبزنس؟',o:'c1',t:'قبل 3 ساعات',done:false},
-  {id:3,n:'منى ق.',u:'@mona_q',q:'هل أقدر أدفع على دفعتين؟',o:null,t:'أمس',done:true}
+var SUBS = ALL.filter(function(s){return s.u!==ME.u});
+var MYSUBS = ALL.filter(function(s){return s.u===ME.u});
+if(!MYSUBS.length) MYSUBS = [{id:'ms1',n:ME.n,u:ME.u,o:'k2',st:'none',prog:40,l:'3 من 8 دروس'}];
+var NOTES = (DB && DB.notes && DB.notes[ME.u]) || [
+  {t:'لا تتخطي تمرين التنفس اليومي قبل النوم، حتى لو كان يومك مزدحم.',ack:false},
+  {t:'جهّزي دفتر ملاحظاتك قبل الجلسة القادمة وسجّلي فيه المواقف اللي أقلقتك.',ack:false},
+  {t:'تم الاتفاق على تقليل الكافيين بعد الساعة 4 عصراً.',ack:true}
+];
+var TESTS = (DB && DB.tests && DB.tests[ME.u]) || [
+  {id:'t1',date:'قبل أسبوعين',res:'ملف شخصيتك يميل للتحليل والتنظيم. نقطة القوة: التخطيط. نقطة التطوير: التفويض.',tips:'جرّبي تفويض مهمة واحدة أسبوعياً.'}
+];
+var CO = (DB && DB.coord) || [
+  {c:'السعودية',f:'🇸🇦',n:'منسقة السعودية',u:'sa_coord'},{c:'الكويت',f:'🇰🇼',n:'منسقة الكويت',u:'kw_coord'},
+  {c:'الإمارات',f:'🇦🇪',n:'منسقة الإمارات',u:'ae_coord'},{c:'قطر',f:'🇶🇦',n:'منسقة قطر',u:'qa_coord'}
 ];
 
 // ألوان الحالات المميزة كما في شرح.txt:
@@ -164,7 +180,7 @@ var ST = {
   none: ['بدون قروب ⚪','']
 };
 
-var S = {tab:'home',sv:'list',q:'',sf:'all',iq:'all',oq:'',cat:'all'};
+var S = {tab:'home',sv:'list',q:'',sf:'all',oq:'',cat:'all',coachType:'all',subFilter:'all',msub:'sessions',remind:true,rg:{cat:'',type:'',o:''}};
 var $ = function(s){return document.querySelector(s)};
 function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML}
 function o(id){return OF.filter(function(x){return x.id===id})[0] || {t:'عرض',cat:'coach',p:'00$',g:0}}
@@ -174,13 +190,26 @@ function tg(u){return 'https://t.me/'+String(u).replace('@','')}
 function chips(arr,cur,act){return '<div class="seg">'+arr.map(function(x){return '<button class="'+(cur===x[0]?'on':'')+'" data-act="'+act+'" data-id="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div>'}
 
 function syncDB(){
-  if(window.MiniAppDB){
-    var db = window.MiniAppDB.load();
-    db.subs = SUBS;
-    db.perm = PERM;
-    window.MiniAppDB.save(db);
+  if(!window.MiniAppDB) return;
+  var db = window.MiniAppDB.load();
+  db.subs = SUBS.concat(MYSUBS);
+  db.notes = db.notes || {}; db.notes[ME.u] = NOTES;
+  if(db.offers){
+    var by={}; db.offers.forEach(function(x){by[x.id]=x});
+    db.offers = OF.map(function(x){
+      var b = by[x.id]; if(!b) b = {vis:true,feat:false,pts:x.pts||[],m:x.m||'',seats:x.seats||'',maxSeats:x.maxSeats||null,groupName:x.groupName||''};
+      b.id=x.id; b.cat=x.cat; b.t=x.t; b.p=x.p; b.d=x.d; b.hasGroup=!!x.g; b.subType=x.st||b.subType||'';
+      if(x.g && b.botLinked===undefined) b.botLinked=false;
+      return b;
+    });
   }
+  window.MiniAppDB.save(db);
 }
+function linked(id){return GR[id]?!!GR[id].bot:false}
+function coachTypes(){var t=['فردي','جماعي'];if(OF.some(function(x){return x.st==='باكج'}))t.push('باكج');return t}
+function subbed(id){return MYSUBS.some(function(s){return s.o===id})}
+function unread(){return NOTES.filter(function(n){return !n.ack}).length}
+function botOk(u){return window.MiniAppDB ? window.MiniAppDB.isBotRegistered(u) : (['@noura','@khaled','@reem','@salman','@mona','@abdullah_r','@hind_k','@fahad_a'].indexOf(u.toLowerCase())>-1)}
 
 function checkCoordBotUser(u){
   var el = $('#coordBotCheck'); if(!el) return;
@@ -211,11 +240,9 @@ function rowSub(s){
 
 function need(){return SUBS.filter(function(s){return s.st==='pending'||s.st==='failed'})}
 function sentWaiting(){return SUBS.filter(function(s){return s.st==='sent'})}
-function rowInq(i){return '<div class="panel" style="'+(i.done?'opacity:.6':'')+'"><div class="row"><b>'+esc(i.n)+'</b><small class="lbl">'+i.t+'</small></div>'+(i.o?'<span class="tag" style="margin-top:6px">'+o(i.o).t+'</span>':'')+'<p style="margin:8px 0;color:var(--text)">'+esc(i.q)+'</p><div class="row" style="justify-content:flex-start"><a class="btn sm primary" href="'+tg(i.u)+'" target="_blank" rel="noopener">رد على تيليجرام</a>'+(i.done?'':'<button class="btn sm" data-act="idone" data-id="'+i.id+'">تم الرد</button>')+'</div></div>'}
-
 function home(){
- var pn=need(), sw=sentWaiting(), ni=INQ.filter(function(i){return !i.done});
- return '<section class="hero"><h1>أهلاً '+ME.n+' 👋</h1><p>منسقة '+ME.c+' '+ME.f+'. إدارة الاشتراكات والروابط والاستفسارات.</p></section>'+
+ var pn=need(), sw=sentWaiting();
+ return '<section class="hero"><h1>أهلاً '+ME.n+' 👋</h1><p>منسقة '+ME.c+' '+ME.f+'. إدارة الاشتراكات والروابط.</p></section>'+
  '<div class="stats" style="margin-top:12px">'+
    '<div class="stat"><b>'+sw.length+'</b><small>روابط أُرسلت ولسا ما دخل</small></div>'+
    '<div class="stat"><b>'+pn.length+'</b><small>روابط تنتظر الإرسال</small></div>'+
@@ -224,13 +251,13 @@ function home(){
  '<div style="margin:12px 0"><button class="btn primary block" data-act="reg">＋ تسجيل اشتراك جديد</button></div>'+
  '<h2>روابط تنتظر الإرسال</h2>'+(pn.length?pn.map(rowSub).join(''):'<p class="desc">ما فيه روابط معلّقة. كل الاشتراكات أُرسلت.</p>')+
  '<h2>روابط مرسلة بانتظار دخول العميل</h2>'+(sw.length?sw.map(rowSub).join(''):'<p class="desc">لا توجد روابط مرسلة بانتظار الدخول.</p>')+
- '<h2>استفسارات جديدة</h2>'+(ni.length?ni.map(rowInq).join(''):'<p class="desc">لا استفسارات جديدة.</p>')+
  '<h2>كيف أسجّل اشتراك؟</h2><div class="panel"><ol class="steps">'+
    '<li>العميل يشوف العرض في الموقع ويضغط «استفسار أو اشتراك»، فتنفتح محادثته معك برسالة جاهزة.</li>'+
-   '<li>تتأكد معه من الاشتراك وتسجّل اسمه ويوزره وتتأكد من ظهوره بالأخضر في فحص البوت.</li>'+
-   '<li>إذا العرض فيه قروب والبوت مربوط به، تضغط «إرسال الرابط» ويوصله من البوت.</li>'+
-   '<li>يدخل العميل القروب، وتتحدث حالته تلقائياً عندك إلى «دخل القروب 🟢».</li>'+
- '</ol><small class="lbl">مثال رسالة العميل: «مرحباً، أرغب بالاستفسار عن العرض التالي: كوتشينغ التواصل — 95$»</small></div>';
+   '<li>بعد ما يتأكد الاشتراك، اضغطي «تسجيل اشتراك جديد» واكتبي اسمه ويوزره.</li>'+
+   '<li>اختاري الفئة ثم النوع ثم العرض، والعروض مرتبة بالحروف.</li>'+
+   '<li>اضغطي «تأكيد وتسجيل الاشتراك»: يتسجل العميل، وإذا العرض فيه قروب مرتبط بالبوت يوصله الرابط مباشرة.</li>'+
+   '<li>يدخل العميل القروب، وتتحدث حالته عندك إلى «دخل القروب 🟢».</li>'+
+ '</ol></div>';
 }
 
 function subs(){
@@ -248,7 +275,7 @@ function slist(){
 function gview(){
   return '<p class="desc">القروبات اللي ضفتِ لها عملاء من طرفك مع حالة البوت والأعضاء.</p>'+
   OF.filter(function(x){return x.g}).map(function(x){
-    var m=SUBS.filter(function(s){return s.o===x.id}),j=m.filter(function(s){return s.st==='joined'}).length,b=GR[x.id]?GR[x.id].bot:true;
+    var m=SUBS.filter(function(s){return s.o===x.id}),j=m.filter(function(s){return s.st==='joined'}).length,b=linked(x.id);
     return '<div class="panel"><div class="row"><h3>'+x.t+'</h3><span class="pill '+(b?'ok':'warn')+'">'+(b?'البوت مربوط ✓':'البوت غير مربوط')+'</span></div>'+
       '<p style="margin:6px 0">دخلوا القروب: '+j+' · بانتظار الدخول: '+(m.length-j)+'</p>'+
       '<button class="btn sm" data-act="grp" data-id="'+x.id+'">عرض الأعضاء ويوزرنيماتهم</button>'+
@@ -256,55 +283,133 @@ function gview(){
   }).join('');
 }
 
-function inq(){var r=INQ.filter(function(i){return S.iq==='all'||(S.iq==='done')===i.done});return chips([['all','الكل'],['todo','جديدة'],['done','تم الرد']],S.iq,'iq')+(r.length?r.map(rowInq).join(''):'<p class="desc">لا استفسارات.</p>')}
+function offers(){
+ var seg=chips([['all','الكل']].concat(Object.keys(CATS).map(function(k){return [k,CATS[k]]})),S.cat,'cat');
+ var ct='';
+ if(S.cat==='coach') ct='<div class="sub-filters">'+[['all','كل الكوتشينغ']].concat(coachTypes().map(function(t){return [t,t]})).map(function(c){return '<button class="'+(S.coachType===c[0]?'on':'')+'" data-act="coachType" data-id="'+c[0]+'">'+c[1]+'</button>'}).join('')+'</div>';
+ var st='<div class="sub-filters" style="margin-bottom:12px">'+[['all','الكل'],['subbed','مشتركة فقط ✓'],['unsubbed','غير مشتركة']].map(function(c){var a=S.subFilter===c[0];return '<button class="'+(a?(c[0]==='subbed'?'sub-active':'on'):'')+'" data-act="subFilter" data-id="'+c[0]+'">'+c[1]+'</button>'}).join('')+'</div>';
+ return '<input class="in" id="oq" type="search" placeholder="ابحث باسم العرض" aria-label="بحث" value="'+esc(S.oq)+'">'+seg+ct+st+
+  '<button class="btn primary block'+(PERM.add?'':' dis')+'" data-act="addof" style="margin-bottom:12px">'+(PERM.add?'＋ إضافة عرض جديد':'🔒 إضافة عرض جديد')+'</button><div id="ol">'+olist()+'</div>'}
+function olist(){
+ var r=OF.filter(function(x){
+  if(S.cat!=='all'&&x.cat!==S.cat) return false;
+  if(S.cat==='coach'&&S.coachType!=='all'&&x.st!==S.coachType) return false;
+  if(S.subFilter==='subbed'&&!subbed(x.id)) return false;
+  if(S.subFilter==='unsubbed'&&subbed(x.id)) return false;
+  return x.t.indexOf(S.oq)>-1;
+ });
+ return r.length?r.map(function(x){
+  return '<article class="card" tabindex="0" data-act="open" data-id="'+x.id+'"><div class="glow"></div>'+
+   '<div style="display:flex;gap:4px;flex-wrap:wrap"><span class="tag">'+CATS[x.cat]+'</span>'+(x.st?'<span class="tag" style="border-color:rgba(45,212,255,.4)">'+x.st+'</span>':'')+'</div>'+
+   '<h3>'+esc(x.t)+'</h3><p class="desc">'+esc(x.d)+'</p>'+
+   '<div class="meta">'+(x.m?'<span class="pill">'+esc(x.m)+'</span>':'')+'<span class="pill price">السعر: '+esc(x.p)+'</span>'+(x.g?'<span class="pill" style="border-color:rgba(79,139,255,.35)">👥 قروب تفاعلي</span>':'<span class="pill" style="opacity:.75">👤 فردي بدون قروب</span>')+(subbed(x.id)?'<span class="pill ok">مشتركة ✓</span>':'')+'</div>'+
+   '<div class="row" style="justify-content:flex-start;margin-top:10px"><button class="btn sm'+(PERM.edit?'':' dis')+'" data-act="of" data-id="'+x.id+'">'+(PERM.edit?'تعديل العرض':'🔒 تعديل')+'</button><button class="btn sm'+(PERM.del?'':' dis')+'" data-act="del" data-id="'+x.id+'">'+(PERM.del?'حذف العرض':'🔒 حذف')+'</button></div></article>';
+ }).join(''):'<div class="panel" style="text-align:center;padding:26px"><p class="desc" style="margin:0;font-size:15px">لا توجد عروض مطابقة لهذه التصفية حالياً.</p></div>';
+}
 
-function offers(){return '<input class="in" id="oq" type="search" placeholder="ابحث باسم العرض" aria-label="بحث" value="'+esc(S.oq)+'">'+chips([['all','الكل']].concat(Object.keys(CATS).map(function(k){return [k,CATS[k]]})),S.cat,'cat')+'<div id="ol">'+olist()+'</div>'}
-function olist(){var r=OF.filter(function(x){return (S.cat==='all'||x.cat===S.cat)&&x.t.indexOf(S.oq)>-1});
- return r.length?r.map(function(x){return '<div class="panel"><span class="tag">'+CATS[x.cat]+'</span> '+(x.g?'<span class="pill ok">فيه قروب</span>':'')+'<h3 style="margin-top:8px">'+x.t+'</h3><small class="lbl">السعر: '+x.p+'</small><div class="row" style="justify-content:flex-start;margin-top:10px"><button class="btn sm'+(PERM.edit?'':' dis')+'" data-act="of" data-id="'+x.id+'">'+(PERM.edit?'تعديل العرض':'🔒 تعديل')+'</button><button class="btn sm'+(PERM.del?'':' dis')+'" data-act="del" data-id="'+x.id+'">'+(PERM.del?'حذف العرض':'🔒 حذف')+'</button></div></div>'}).join(''):'<p class="desc">ما لقينا عرض بهذا الاسم.</p>'}
+function mine(){
+ var seg=[['sessions','الجلسات النفسية'],['tests','الاختبارات والتقييم']].map(function(x){return '<button class="'+(S.msub===x[0]?'on':'')+'" data-act="msub" data-id="'+x[0]+'">'+x[1]+(x[0]==='sessions'&&unread()?' ('+unread()+')':'')+'</button>'}).join('');
+ var b='';
+ if(S.msub==='sessions'){
+  b='<h2 style="margin-top:6px">ملاحظات المختص السرية</h2><p class="desc">ملاحظات يرسلها لك المختص بعد كل جلسة. اقرئي كل ملاحظة وأكّدي قراءتك ليعلم المختص باطلاعك عليها.</p>'+
+  NOTES.map(function(n,i){return '<div class="note'+(n.ack?' done':'')+'"><b>'+(n.ack?'✓ تمت القراءة':'⚠ ملاحظة سرية من المختص')+'</b><p style="margin:4px 0 8px;color:var(--text)">'+esc(n.t)+'</p>'+(n.ack?'':'<button class="btn block" data-act="ack" data-id="'+i+'">قرأتها وفهمتها</button>')+'</div>'}).join('');
+ } else {
+  b=TESTS.map(function(t){var x=o(t.id);return '<div class="panel"><span class="tag">مكتمل · '+esc(t.date)+'</span><h3 style="margin-top:8px">'+esc(x.t)+'</h3><p>نتيجتك من المختص:</p><div class="note done"><p style="margin:0;color:var(--text)">'+esc(t.res)+'</p></div><p>💡 '+esc(t.tips)+'</p><button class="btn" data-act="open" data-id="'+t.id+'">تفاصيل العرض</button></div>'}).join('')+
+  '<div class="panel"><span class="tag">بانتظارك</span><h3 style="margin-top:8px">اختبار القلق والتوتر النفسي</h3><p>يُعاد كل شهرين · الموعد القادم بعد 12 يوم</p><div class="row"><span style="font-size:14px">إشعار تيليجرام عند حلول الموعد</span><button class="sw" role="switch" aria-checked="'+S.remind+'" aria-label="تنبيه تيليجرام" data-act="remind"></button></div><div style="margin-top:12px"><button class="btn primary block" data-act="contact">طلب موعد الاختبار عبر المنسقة</button></div></div>';
+ }
+ return '<div class="seg">'+seg+'</div>'+b;
+}
 
 function more(){
  var P=function(t,ok){return '<div class="row" style="margin:8px 0"><span style="font-size:14px">'+t+'</span><span class="pill '+(ok?'ok':'')+'">'+(ok?'✓ مسموح':'🔒 غير مسموح')+'</span></div>'};
  return '<div class="panel"><h3>'+ME.f+' '+ME.n+'</h3><p>منسقة '+ME.c+' · '+ME.u+'</p></div>'+
- '<h2>صلاحياتي الحالية</h2><div class="panel">'+P('تسجيل وتعديل وحذف الاشتراكات',1)+P('الرد على الاستفسارات وإرسال الروابط',1)+P('تعديل العروض',PERM.edit)+P('حذف العروض',PERM.del)+'<p style="margin:8px 0 0;font-size:13px;color:var(--muted)">الأدمن هو اللي يحدد صلاحياتك. للتغيير تواصل معه.</p></div>'+
- '<div class="panel"><h3>خصوصية العميل</h3><p>نتائج الاختبارات وملاحظات الجلسات خاصة بالمختص ولا تظهر للمنسقة حفاظاً على السرية.</p></div>'+
- '<h2>محاكاة صلاحيات الأدمن</h2><div class="panel"><p>غيّري الصلاحيات لتجربة القفل والفتح في الواجهة:</p><div class="row"><span style="font-size:14px">صلاحية تعديل العروض</span>'+sw(PERM.edit,'perm','edit')+'</div><div class="row" style="margin-top:8px"><span style="font-size:14px">صلاحية حذف العروض</span>'+sw(PERM.del,'perm','del')+'</div></div>';
+ '<h2>صلاحياتي الحالية</h2><div class="panel">'+P('تسجيل وتعديل وحذف الاشتراكات',1)+P('إرسال روابط الدخول للقروبات',1)+P('إضافة العروض',PERM.add)+P('تعديل العروض',PERM.edit)+P('حذف العروض',PERM.del)+'<p style="margin:8px 0 0;font-size:13px;color:var(--muted)">الأدمن هو اللي يحدد صلاحياتك. للتغيير تواصلي معه.</p></div>'+
+ '<div class="panel"><h3>خصوصية العميل</h3><p>نتائج الاختبارات وملاحظات الجلسات الخاصة بالعملاء تخص المختص فقط ولا تظهر لك.</p></div>';
 }
 
 function render(){
- $('#view').innerHTML={home:home,subs:subs,inq:inq,offers:offers,more:more}[S.tab]();
- var T=[['home','🏠','الرئيسية',0],['subs','🧾','الاشتراكات',need().length],['inq','💬','الاستفسارات',INQ.filter(function(i){return !i.done}).length],['offers','🗂️','العروض',0],['more','⚙️','المزيد',0]];
+ $('#view').innerHTML={home:home,subs:subs,mine:mine,offers:offers,more:more}[S.tab]();
+ var T=[['home','🏠','الرئيسية',0],['subs','🧾','المشتركين',need().length],['mine','⭐','اشتراكاتي',unread()],['offers','🗂️','العروض',0],['more','⚙️','المزيد',0]];
  $('#nav').innerHTML=T.map(function(t){return '<button class="'+(S.tab===t[0]?'on':'')+'" data-act="go" data-id="'+t[0]+'"><span>'+t[1]+'</span>'+t[2]+(t[3]?'<i class="badge">'+t[3]+'</i>':'')+'</button>'}).join('')}
 
 function sheet(h){$('#sheet').innerHTML='<div class="grab"></div>'+h;$('#ov').classList.add('show');$('#sheet').scrollTop=0}
 function closeSheet(){$('#ov').classList.remove('show')}
 
+function pickHtml(){
+ var r=S.rg,h='<label class="lbl">الفئة</label>'+chips(Object.keys(CATS).map(function(k){return [k,CATS[k]]}),r.cat,'rcat');
+ if(r.cat==='coach') h+='<label class="lbl">النوع</label>'+chips(coachTypes().map(function(t){return [t,t]}),r.type,'rtype');
+ if(r.cat&&(r.cat!=='coach'||r.type)){
+  var l=OF.filter(function(x){return x.cat===r.cat&&(r.cat!=='coach'||x.st===r.type)}).sort(function(a,b){return a.t.localeCompare(b.t,'ar')});
+  h+='<label class="lbl">العرض (مرتب بالحروف)</label>'+(l.length?'<div class="plist">'+l.map(function(x){return '<button class="po'+(r.o===x.id?' on':'')+'" data-act="rpick" data-id="'+x.id+'"><span>'+esc(x.t)+'</span><small>'+(x.g?(linked(x.id)?'قروب مرتبط بالبوت ✓':'قروب غير مرتبط ⚠️'):'بدون قروب')+' · '+esc(x.p)+'</small></button>'}).join('')+'</div>':'<p class="desc">لا توجد عروض في هذا التصنيف.</p>');
+ }
+ return h;
+}
+function refreshPick(){var p=$('#pick');if(p)p.innerHTML=pickHtml();hint()}
 function hint(){
-  var x=o($('#ro').value), h=$('#hint'); if(!h) return;
-  var grBot = GR[x.id] ? GR[x.id].bot : true;
-  if(!x.g) h.textContent='هذا العرض فردي بدون قروب، يكفي تسجيله.';
-  else if(grBot) h.textContent='هذا العرض فيه قروب والبوت مربوط به ✓. بعد التسجيل يمكنك إرسال الرابط للعميل.';
-  else h.textContent='⚠️ هذا العرض فيه قروب لكن البوت غير مربوط به حالياً. سجّليه، ويتفعل إرسال الرابط بعد ربطه من الأدمن.';
+ var h=$('#hint'); if(!h) return;
+ var x=S.rg.o?o(S.rg.o):null;
+ if(!x) h.textContent='اختاري الفئة ثم العرض.';
+ else if(!x.g) h.textContent='هذا العرض بدون قروب، يكفي تسجيل بيانات العميل.';
+ else if(linked(x.id)) h.textContent='هذا العرض فيه قروب ومرتبط بالبوت ✓. بعد التأكيد يوصل رابط الدخول للعميل مباشرة.';
+ else h.textContent='⚠️ قروب هذا العرض غير مرتبط بالبوت. تقدرين تسجلين العميل، لكن ما راح ينرسل له رابط إلا بعد ما يربطه الأدمن.';
 }
-
 function regSheet(){
-  sheet('<h2 style="margin:4px 0 8px">تسجيل اشتراك جديد</h2>'+
-    '<label class="lbl" for="rn">اسم العميل</label><input class="in" id="rn" placeholder="مثال: نورة علي">'+
-    '<label class="lbl" for="ru">يوزر تيليجرام</label><input class="in" id="ru" placeholder="@username" dir="ltr" value="@noura">'+
-    '<div id="coordBotCheck" style="font-size:12px;margin:-2px 0 8px"></div>'+
-    '<label class="lbl" for="ro">العرض المطلوب</label><select class="in" id="ro">'+
-      OF.map(function(x){return '<option value="'+x.id+'">'+x.t+(x.g?' (فيه قروب)':'')+'</option>'}).join('')+
-    '</select>'+
-    '<p class="desc" id="hint" style="margin-top:6px"></p>'+
-    '<button class="btn primary block" data-act="savereg">تأكيد وتسجيل الاشتراك</button>');
-  hint();
-  checkCoordBotUser($('#ru').value);
+ S.rg={cat:'',type:'',o:''};
+ sheet('<h2 style="margin:4px 0 8px">تسجيل اشتراك جديد</h2>'+
+  '<label class="lbl" for="rn">اسم العميل</label><input class="in" id="rn" placeholder="مثال: نورة علي">'+
+  '<label class="lbl" for="ru">يوزر تيليجرام</label><input class="in" id="ru" placeholder="@username" dir="ltr" value="@noura">'+
+  '<div id="coordBotCheck" style="font-size:12px;margin:-2px 0 8px"></div><div id="pick"></div>'+
+  '<p class="desc" id="hint" style="margin-top:6px"></p>'+
+  '<button class="btn primary block" data-act="confirmreg">تأكيد وتسجيل الاشتراك</button>');
+ refreshPick(); checkCoordBotUser($('#ru').value);
 }
-
+function confirmReg(){
+ var n=$('#rn').value.trim(),u=$('#ru').value.trim(),x=S.rg.o?o(S.rg.o):null;
+ if(!n||!u){toast('اكتبي اسم العميل ويوزره');return}
+ if(!x){toast('اختاري العرض أولاً');return}
+ u=u[0]==='@'?u:'@'+u;
+ var st='none',ttl='تم تسجيل العميل',ic='✅',N='<b>'+esc(n)+'</b>',T='«'+esc(x.t)+'»',msg;
+ if(!x.g){msg='تم تسجيل العميل '+N+' ('+esc(u)+') في '+T+' بالبيانات المدخلة.'}
+ else if(!linked(x.id)){st='pending';ic='⚠️';ttl='تم التسجيل بدون إرسال رابط';msg='تم تسجيل العميل '+N+' في '+T+'، لكن قروب هذا العرض غير مرتبط بالبوت فما انرسل له رابط. الأدمن هو اللي يربط البوت بالقروب، وبعدها ترسلين الرابط من صفحة «المشتركين».'}
+ else if(!botOk(u)){st='failed';ic='⚠️';ttl='تم التسجيل وتعذّر إرسال الرابط';msg='تم تسجيل العميل '+N+' في '+T+'، لكن اليوزر ما بدأ البوت فتعذّر إرسال الرابط. اطلبي منه يفتح البوت، وأعيدي الإرسال من صفحة «المشتركين».'}
+ else{st='sent';msg='تم تسجيل العميل '+N+' في '+T+' وسينرسل له رابط الدخول للقروب من البوت. تحققي من حالته في صفحة «المشتركين».'}
+ var id=Date.now();
+ SUBS.unshift({id:id,n:n,u:u,o:x.id,d:'الآن',st:st});
+ syncDB();render();
+ sheet('<div style="text-align:center;padding:6px 0"><div style="font-size:34px">'+ic+'</div><h2 style="margin:6px 0">'+ttl+'</h2><p class="desc">'+msg+'</p></div><button class="btn primary block" data-act="viewsub" data-id="'+id+'">عرض حالته في المشتركين</button><div style="margin-top:8px"><button class="btn block" data-act="reg">تسجيل اشتراك آخر</button></div>');
+}
+function offerSheet(id){
+ var x=o(id),b=subbed(id);
+ var btns=CO.map(function(c){var l=window.MiniAppDB?window.MiniAppDB.buildCoordTelegramUrl(c.u,x.t,CATS[x.cat],x.p):('https://t.me/'+String(c.u).replace('@',''));return '<a class="btn sm primary" href="'+l+'" target="_blank" rel="noopener" style="flex:1;min-width:130px">'+c.f+' '+c.n+'</a>'}).join('');
+ sheet('<div style="display:flex;gap:4px;flex-wrap:wrap"><span class="tag">'+CATS[x.cat]+'</span>'+(x.st?'<span class="tag">'+x.st+'</span>':'')+'</div><h2 style="margin:8px 0 4px">'+esc(x.t)+'</h2><p class="desc">'+esc(x.d)+'</p>'+
+  '<div class="meta">'+(x.m?'<span class="pill">'+esc(x.m)+'</span>':'')+'<span class="pill price">السعر: '+esc(x.p)+'</span>'+(x.g?'<span class="pill">👥 قروب تفاعلي</span>':'<span class="pill">👤 فردي بدون قروب</span>')+'</div>'+
+  (x.pts&&x.pts.length?'<h2>ماذا يشمل؟</h2><ul style="margin:0;padding-inline-start:20px;color:var(--muted)">'+x.pts.map(function(p){return '<li>'+esc(p)+'</li>'}).join('')+'</ul>':'')+
+  '<div style="margin:14px 0">'+(b?'<span class="pill ok">أنتِ مشتركة في هذا العرض ✓</span>':'<h3 style="font-size:14px;margin:0 0 6px">💬 للاشتراك أو الاستفسار تواصلي مع المنسقة:</h3><div style="display:flex;flex-wrap:wrap;gap:6px">'+btns+'</div>')+'</div>');
+}
+function contactSheet(){
+ var btns=CO.map(function(c){var l=window.MiniAppDB?window.MiniAppDB.buildCoordTelegramUrl(c.u,'اختبار القلق والتوتر النفسي',CATS.test,''):('https://t.me/'+String(c.u).replace('@',''));return '<a class="btn sm primary" href="'+l+'" target="_blank" rel="noopener" style="flex:1;min-width:130px">'+c.f+' '+c.n+'</a>'}).join('');
+ sheet('<h2 style="margin:4px 0 8px">طلب موعد الاختبار</h2><p class="desc">اختاري منسقة وتنفتح محادثتها برسالة جاهزة.</p><div style="display:flex;flex-wrap:wrap;gap:6px">'+btns+'</div>');
+}
+function addOfSheet(){
+ sheet('<h2 style="margin:4px 0 8px">إضافة عرض جديد</h2><label class="lbl" for="an">اسم العرض</label><input class="in" id="an"><label class="lbl" for="ac">الفئة</label><select class="in" id="ac">'+Object.keys(CATS).map(function(k){return '<option value="'+k+'">'+CATS[k]+'</option>'}).join('')+'</select><div id="adyn"></div><label class="lbl" for="ap">السعر</label><input class="in" id="ap" value="00$"><label class="lbl" for="ad">الوصف</label><textarea id="ad"></textarea><button class="btn primary block" data-act="saveadd">إضافة العرض</button>');
+ addDyn();
+}
+function addDyn(){
+ var ac=$('#ac').value,at=($('#at')||{}).value||'فردي',sm=($('#asm')||{}).value||'limited',cn=($('#acn')||{}).value||'',h='';
+ var N=function(t){return '<div class="note done"><p style="margin:0">'+t+'</p></div>'};
+ if(ac==='coach'){
+  h='<label class="lbl" for="at">نوع الكوتشينغ</label><select class="in" id="at"><option'+(at==='فردي'?' selected':'')+'>فردي</option><option'+(at==='جماعي'?' selected':'')+'>جماعي</option></select>';
+  if(at==='فردي') h+=N('كوتشينغ فردي: مقعد واحد تلقائياً وبدون قروب.');
+  else h+='<label class="lbl" for="asm">المقاعد</label><select class="in" id="asm"><option value="limited"'+(sm==='limited'?' selected':'')+'>عدد محدود</option><option value="open"'+(sm==='open'?' selected':'')+'>غير محدودة</option></select>'+(sm==='limited'?'<label class="lbl" for="acn">عدد المقاعد</label><input class="in" id="acn" type="number" min="1" inputmode="numeric" value="'+esc(cn)+'">':'')+N('كوتشينغ جماعي: له قروب، ويتفعل إرسال الرابط بعد ما يربطه الأدمن بالبوت.');
+ } else if(ac==='course') h=N('كورس تعليمي: له قروب وبدون حد للمقاعد، ويتفعل إرسال الرابط بعد ما يربطه الأدمن بالبوت.');
+ else h=N((ac==='session'?'جلسة نفسية':'اختبار تقييم')+': فردي وبدون قروب.');
+ $('#adyn').innerHTML=h;
+}
 function subSheet(id){
  var s=SUBS.filter(function(x){return x.id==id})[0];
  if(!s) return;
  var x=o(s.o),st=ST[s.st]||ST.none,b;
- var bot=GR[x.id]?GR[x.id].bot:true;
+ var bot=linked(x.id);
  if(!x.g) b='<div class="panel"><p style="margin:0">هذا العرض بدون قروب، تم تأكيد الاشتراك بنجاح.</p></div>';
  else{
   var m={pending:'البوت يرسل رابط الدخول للعميل مباشرة عند الضغط على إرسال الرابط.',sent:'أرسل البوت الرابط للعميل. بانتظار دخوله للقروب.',joined:'دخل العميل القروب بنجاح ✓. لا تحتاجين لأي إجراء.',failed:'تعذّر إرسال الرابط، غالباً لأن العميل لم يفتح البوت. اطلبي منه يفتحه ثم أعيدي الإرسال.'}[s.st];
@@ -360,20 +465,35 @@ function delSheet(id){var x=o(id);sheet('<h2 style="margin:4px 0 8px">حذف ا�
 function act(el){
  var a=el.dataset.act,id=el.dataset.id,v=function(s){return $(s).value.trim()};
  if(a==='go'){S.tab=id;render();scrollTo(0,0)}
- else if(a==='sf'){S.sf=id;render()}else if(a==='iq'){S.iq=id;render()}else if(a==='cat'){S.cat=id;render()}
+ else if(a==='sf'){S.sf=id;render()}else if(a==='cat'){S.cat=id;if(id!=='coach')S.coachType='all';render()}
+ else if(a==='coachType'){S.coachType=id;render()}else if(a==='subFilter'){S.subFilter=id;render()}
+ else if(a==='msub'){S.msub=id;render()}
+ else if(a==='open')offerSheet(id);
+ else if(a==='contact')contactSheet();
+ else if(a==='remind'){S.remind=!S.remind;toast(S.remind?'تم تفعيل التذكير':'تم إيقاف التذكير');render()}
+ else if(a==='ack'){NOTES[+id].ack=true;syncDB();toast('تم تأكيد قراءة الملاحظة');render()}
+ else if(a==='confirmreg')confirmReg();
+ else if(a==='viewsub'){var vs=SUBS.filter(function(x){return x.id==id})[0];S.tab='subs';S.sv='list';S.sf='all';S.q=vs?vs.n:'';closeSheet();render();scrollTo(0,0)}
+ else if(a==='rcat'){S.rg={cat:id,type:'',o:''};refreshPick()}
+ else if(a==='rtype'){S.rg.type=id;S.rg.o='';refreshPick()}
+ else if(a==='rpick'){S.rg.o=id;refreshPick()}
+ else if(a==='addof'){if(!PERM.add){toast('🔒 الأدمن ما أعطاك صلاحية إضافة العروض');return}addOfSheet()}
+ else if(a==='saveadd'){
+   var an=v('#an'),ac=$('#ac').value,ap=v('#ap');
+   if(!an){toast('اكتبي اسم العرض');return}
+   if(!ap){toast('اكتبي السعر');return}
+   var at=ac==='coach'?$('#at').value:'',g=(ac==='course'||(ac==='coach'&&at==='جماعي'))?1:0,seats='',mx=null,m='';
+   if(ac==='coach'&&at==='فردي'){seats='مقعد فردي خاص (كرسي واحد)';mx=1;m='جلسات فردية'}
+   else if(ac==='coach'){m='جلسات جماعية';if($('#asm').value==='limited'){var c=parseInt($('#acn').value,10);if(!(c>0)){toast('اكتبي عدد المقاعد');return}mx=c;seats='كراسي محددة ('+c+' مقعد فقط)'}else seats='مقاعد مفتوحة (غير محدودة)'}
+   else if(ac==='course'){seats='مقاعد مفتوحة (بدون حد)';m='كورس تعليمي'}
+   else m=ac==='session'?'جلسات فردية':'اختبار تقييمي';
+   var nid='n'+Date.now();
+   OF.push({id:nid,cat:ac,t:an,g:g,p:ap,d:v('#ad'),m:m,pts:[],st:at,seats:seats,maxSeats:mx,groupName:g?('قروب '+an):''});
+   if(g)GR[nid]={bot:false};
+   syncDB();closeSheet();toast(g?'تمت إضافة العرض. ربط القروب بالبوت يتم من الأدمن':'تمت إضافة العرض');render();
+ }
  else if(a==='close')closeSheet();
  else if(a==='reg')regSheet();
- else if(a==='savereg'){
-   if(!v('#rn')||!v('#ru')){toast('اكتبي اسم العميل ويوزره');return}
-   var u=v('#ru');u=u[0]==='@'?u:'@'+u;
-   var x=o($('#ro').value);
-   var n={id:Date.now(),n:v('#rn'),u:u,o:x.id,d:'الآن',st:x.g?'pending':'none'};
-   SUBS.unshift(n);
-   syncDB();
-   render();
-   if(x.g) subSheet(n.id);
-   else { closeSheet(); toast('تم تسجيل الاشتراك بنجاح ✓'); }
- }
  else if(a==='sub')subSheet(id);
  else if(a==='editsub')editSubSheet(id);
  else if(a==='saveeditsub'){
@@ -400,7 +520,7 @@ function act(el){
  else if(a==='grp')gSheet(id);
  else if(a==='send'){
    var q=SUBS.filter(function(s){return s.id==id})[0];
-   var bot=GR[q.o]?GR[q.o].bot:true;
+   var bot=linked(q.o);
    if(!bot){toast('⚠️ البوت غير مربوط بقروب هذا العرض. تواصل مع الأدمن لربطه');return}
    q.st='sent';
    syncDB();
@@ -422,8 +542,7 @@ function act(el){
    toast('دخل العميل القروب بنجاح وتم تحديث حالته 🟢');
    render();
  }
- else if(a==='idone'){INQ.filter(function(i){return i.id==id})[0].done=true;toast('تم تعليم الاستفسار كمُجاب');render()}
- else if(a==='of'){
+  else if(a==='of'){
    if(!PERM.edit){toast('🔒 الأدمن ما أعطاك صلاحية تعديل العروض');return}
    ofSheet(id);
  }
@@ -431,15 +550,14 @@ function act(el){
    var x=o(id);
    if(!v('#ot')){toast('اكتب اسم العرض');return}
    x.t=v('#ot');x.p=v('#op');x.d=v('#od');
-   closeSheet();toast('تم حفظ التعديل');render();
+   syncDB();closeSheet();toast('تم حفظ التعديل');render();
  }
  else if(a==='del'){
    if(!PERM.del){toast('🔒 الأدمن ما أعطاك صلاحية حذف العروض');return}
    delSheet(id);
  }
- else if(a==='rmof'){OF=OF.filter(function(x){return x.id!==id});closeSheet();toast('تم حذف العرض');render()}
- else if(a==='perm'){PERM[id]=!PERM[id];syncDB();render()}
- else if(a==='theme')setTheme(document.documentElement.dataset.theme==='light'?'dark':'light');
+ else if(a==='rmof'){OF=OF.filter(function(x){return x.id!==id});syncDB();closeSheet();toast('تم حذف العرض');render()}
+  else if(a==='theme')setTheme(document.documentElement.dataset.theme==='light'?'dark':'light');
 }
 function setTheme(m){document.documentElement.dataset.theme=m;$('#thl').textContent=m==='light'?'فاتح':'دارك';try{localStorage.setItem('theme',m)}catch(e){}}
 document.addEventListener('click',function(e){var el=e.target.closest('[data-act]');if(el&&el.tagName!=='A')act(el);else if(e.target.id==='ov')closeSheet()});
@@ -448,7 +566,7 @@ document.addEventListener('input',function(e){
   if(e.target.id==='oq'){S.oq=e.target.value;$('#ol').innerHTML=olist()}
   if(e.target.id==='ru'){checkCoordBotUser(e.target.value)}
 });
-document.addEventListener('change',function(e){if(e.target.id==='ro')hint()});
+document.addEventListener('change',function(e){if(['ac','at','asm'].indexOf(e.target.id)>-1&&$('#adyn'))addDyn()});
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeSheet()});
 var saved=null;try{saved=localStorage.getItem('theme')}catch(e){}
 setTheme(saved||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'));
