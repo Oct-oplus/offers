@@ -134,16 +134,16 @@ var DB = window.MiniAppDB ? window.MiniAppDB.load() : null;
 var CATS = {coach:'كوتشينغ',course:'كورسات تطويرية',session:'جلسات نفسية',test:'اختبارات تقييم'};
 
 var OF = (DB && DB.offers) ? DB.offers.map(function(o){
-  return { id:o.id, cat:o.cat, t:o.t, g:o.hasGroup?1:0, p:o.p, d:o.d, m:o.m, pts:o.pts||[], st:o.subType||'', seats:o.seats||'', maxSeats:o.maxSeats||null, groupName:o.groupName||'' };
+  return { vis:o.vis!==false, id:o.id, cat:o.cat, t:o.t, g:o.hasGroup?1:0, p:o.p, d:o.d, m:o.m, pts:o.pts||[], st:o.subType||'', seats:o.seats||'', maxSeats:o.maxSeats||null, groupName:o.groupName||'' };
 }) : [
   ['c1','coach','كوتشينغ التواصل',0,'فردي'],['c2','coach','كوتشينغ البزنس',0,'فردي'],['c3','coach','كوتشينغ جماعي: الحياة والأهداف',1,'جماعي'],
   ['k1','course','إدارة الوقت والتركيز',1,''],['k2','course','بناء الثقة بالنفس',1,''],['k3','course','مهارات القيادة',1,''],
   ['s1','session','جلسة القلق والضغوط',0,''],['s2','session','جلسة العلاقات',0,''],['s3','session','التعافي من الاحتراق',0,''],
   ['t1','test','اختبار الشخصية',0,''],['t2','test','اختبار القلق والتوتر',0,''],['t3','test','اختبار الاحتراق الوظيفي',0,'']
-].map(function(a){return{id:a[0],cat:a[1],t:a[2],g:a[3],st:a[4],p:'00$',d:'وصف مختصر للعرض.',m:'',pts:[],seats:''}});
+].map(function(a){return{vis:true,id:a[0],cat:a[1],t:a[2],g:a[3],st:a[4],p:'00$',d:'وصف مختصر للعرض.',m:'',pts:[],seats:''}});
 
 var ME = {n:'سارة',f:'🇸🇦',c:'السعودية',u:'@sa_coord'};
-var PERM = Object.assign({edit:true,del:false,add:true}, (DB && DB.perm) || {});
+var PERM = Object.assign({add:true,edit:true,hide:false,del:false}, (DB && DB.perms && DB.perms[String(ME.u).replace('@','')]) || (DB && DB.perm) || {});
 var GR = (function(){var g={};if(DB&&DB.offers)DB.offers.forEach(function(x){if(x.hasGroup)g[x.id]={bot:!!x.botLinked}});return Object.keys(g).length?g:{c3:{bot:true},k1:{bot:true},k2:{bot:true},k3:{bot:false}}})();
 var ALL = (DB && DB.subs) || [
   {id:1,n:'عبدالله ر.',u:'@abdullah_r',o:'k1',d:'اليوم',st:'pending'},
@@ -199,7 +199,7 @@ function syncDB(){
     var by={}; db.offers.forEach(function(x){by[x.id]=x});
     db.offers = OF.map(function(x){
       var b = by[x.id]; if(!b) b = {vis:true,feat:false,pts:x.pts||[],m:x.m||'',seats:x.seats||'',maxSeats:x.maxSeats||null,groupName:x.groupName||''};
-      b.id=x.id; b.cat=x.cat; b.t=x.t; b.p=x.p; b.d=x.d; b.hasGroup=!!x.g; b.subType=x.st||b.subType||'';
+      b.id=x.id; b.vis=x.vis!==false; b.cat=x.cat; b.t=x.t; b.p=x.p; b.d=x.d; b.hasGroup=!!x.g; b.subType=x.st||b.subType||'';
       if(x.g && b.botLinked===undefined) b.botLinked=false;
       return b;
     });
@@ -303,8 +303,8 @@ function olist(){
   return '<article class="card" tabindex="0" data-act="open" data-id="'+x.id+'"><div class="glow"></div>'+
    '<div style="display:flex;gap:4px;flex-wrap:wrap"><span class="tag">'+CATS[x.cat]+'</span>'+(x.st?'<span class="tag" style="border-color:rgba(45,212,255,.4)">'+x.st+'</span>':'')+'</div>'+
    '<h3>'+esc(x.t)+'</h3><p class="desc">'+esc(x.d)+'</p>'+
-   '<div class="meta">'+(x.m?'<span class="pill">'+esc(x.m)+'</span>':'')+'<span class="pill price">السعر: '+esc(x.p)+'</span>'+(x.g?'<span class="pill" style="border-color:rgba(79,139,255,.35)">👥 قروب تفاعلي</span>':'<span class="pill" style="opacity:.75">👤 فردي بدون قروب</span>')+(subbed(x.id)?'<span class="pill ok">مشتركة ✓</span>':'')+'</div>'+
-   '<div class="row" style="justify-content:flex-start;margin-top:10px"><button class="btn sm'+(PERM.edit?'':' dis')+'" data-act="of" data-id="'+x.id+'">'+(PERM.edit?'تعديل العرض':'🔒 تعديل')+'</button><button class="btn sm'+(PERM.del?'':' dis')+'" data-act="del" data-id="'+x.id+'">'+(PERM.del?'حذف العرض':'🔒 حذف')+'</button></div></article>';
+   '<div class="meta">'+(x.m?'<span class="pill">'+esc(x.m)+'</span>':'')+'<span class="pill price">السعر: '+esc(x.p)+'</span>'+(x.g?'<span class="pill" style="border-color:rgba(79,139,255,.35)">👥 قروب تفاعلي</span>':'<span class="pill" style="opacity:.75">👤 فردي بدون قروب</span>')+(subbed(x.id)?'<span class="pill ok">مشتركة ✓</span>':'')+(x.vis?'':'<span class="pill warn">مخفي عن العملاء</span>')+'</div>'+
+   '<div class="row" style="justify-content:flex-start;margin-top:10px"><button class="btn sm'+(PERM.edit?'':' dis')+'" data-act="of" data-id="'+x.id+'">'+(PERM.edit?'تعديل العرض':'🔒 تعديل')+'</button><button class="btn sm'+(PERM.hide?'':' dis')+'" data-act="vis" data-id="'+x.id+'">'+(PERM.hide?'':'🔒 ')+(x.vis?'إخفاء':'إظهار')+'</button><button class="btn sm'+(PERM.del?'':' dis')+'" data-act="del" data-id="'+x.id+'">'+(PERM.del?'حذف العرض':'🔒 حذف')+'</button></div></article>';
  }).join(''):'<div class="panel" style="text-align:center;padding:26px"><p class="desc" style="margin:0;font-size:15px">لا توجد عروض مطابقة لهذه التصفية حالياً.</p></div>';
 }
 
@@ -324,7 +324,7 @@ function mine(){
 function more(){
  var P=function(t,ok){return '<div class="row" style="margin:8px 0"><span style="font-size:14px">'+t+'</span><span class="pill '+(ok?'ok':'')+'">'+(ok?'✓ مسموح':'🔒 غير مسموح')+'</span></div>'};
  return '<div class="panel"><h3>'+ME.f+' '+ME.n+'</h3><p>منسقة '+ME.c+' · '+ME.u+'</p></div>'+
- '<h2>صلاحياتي الحالية</h2><div class="panel">'+P('تسجيل وتعديل وحذف الاشتراكات',1)+P('إرسال روابط الدخول للقروبات',1)+P('إضافة العروض',PERM.add)+P('تعديل العروض',PERM.edit)+P('حذف العروض',PERM.del)+'<p style="margin:8px 0 0;font-size:13px;color:var(--muted)">الأدمن هو اللي يحدد صلاحياتك. للتغيير تواصلي معه.</p></div>'+
+ '<h2>صلاحياتي الحالية</h2><div class="panel">'+P('تسجيل وتعديل وحذف الاشتراكات',1)+P('إرسال روابط الدخول للقروبات',1)+P('إضافة العروض',PERM.add)+P('تعديل العروض',PERM.edit)+P('إخفاء العروض',PERM.hide)+P('حذف العروض',PERM.del)+'<p style="margin:8px 0 0;font-size:13px;color:var(--muted)">الأدمن هو اللي يحدد صلاحياتك. للتغيير تواصلي معه.</p></div>'+
  '<div class="panel"><h3>خصوصية العميل</h3><p>نتائج الاختبارات وملاحظات الجلسات الخاصة بالعملاء تخص المختص فقط ولا تظهر لك.</p></div>'+
  '<h2>بوت التنبيهات والإشعارات الفورية</h2><div class="panel"><h3>تشغيل تنبيهات التيليجرام</h3><p>لتصلك إشعارات فورية ومباشرة على تيليجرام لما يصير شيء يخص اشتراكاتك وعملائك:</p><ul style="margin:0 0 12px;padding-inline-start:20px;color:var(--muted);font-size:14px"><li>دخول عميل للقروب بعد إرسال الرابط له.</li><li>تعذّر إرسال الرابط لعميل لأنه ما بدأ البوت.</li><li>ربط الأدمن للبوت بقروب عرض كان غير مرتبط.</li><li>تغيير صلاحياتك من الأدمن.</li><li>ملاحظات المختص وتذكيرات مواعيد اشتراكاتك الشخصية.</li></ul><button class="btn '+(S.tg?'':'primary')+' block" data-act="tg">'+(S.tg?'✓ التنبيهات مفعلة الآن (اضغطي للتعطيل)':'🔔 تشغيل التنبيهات على تيليجرام')+'</button></div>';
 }
@@ -479,6 +479,7 @@ function act(el){
    if(window.MiniAppDB){var db=window.MiniAppDB.load(),bu=String(ME.u).toLowerCase();bu=bu[0]==='@'?bu:'@'+bu;db.botUsers=(db.botUsers||[]).filter(function(x){return String(x).toLowerCase()!==bu});if(S.tg)db.botUsers.push(bu);window.MiniAppDB.save(db)}
    toast(S.tg?'تم تشغيل تنبيهات تيليجرام بنجاح 🔔':'تم إيقاف التنبيهات 🔕');render();
  }
+ else if(a==='vis'){if(!PERM.hide){toast('🔒 الأدمن ما أعطاك صلاحية إخفاء العروض');return}var vx=o(id);vx.vis=!vx.vis;syncDB();toast(vx.vis?'صار العرض ظاهراً للعملاء':'تم إخفاء العرض عن العملاء');render()}
  else if(a==='confirmreg')confirmReg();
  else if(a==='viewsub'){var vs=SUBS.filter(function(x){return x.id==id})[0];S.tab='subs';S.sv='list';S.sf='all';S.q=vs?vs.n:'';closeSheet();render();scrollTo(0,0)}
  else if(a==='rcat'){S.rg={cat:id,type:'',o:''};refreshPick()}
@@ -495,7 +496,7 @@ function act(el){
    else if(ac==='course'){seats='مقاعد مفتوحة (بدون حد)';m='كورس تعليمي'}
    else m=ac==='session'?'جلسات فردية':'اختبار تقييمي';
    var nid='n'+Date.now();
-   OF.push({id:nid,cat:ac,t:an,g:g,p:ap,d:v('#ad'),m:m,pts:[],st:at,seats:seats,maxSeats:mx,groupName:g?('قروب '+an):''});
+   OF.push({vis:true,id:nid,cat:ac,t:an,g:g,p:ap,d:v('#ad'),m:m,pts:[],st:at,seats:seats,maxSeats:mx,groupName:g?('قروب '+an):''});
    if(g)GR[nid]={bot:false};
    syncDB();closeSheet();toast(g?'تمت إضافة العرض. ربط القروب بالبوت يتم من الأدمن':'تمت إضافة العرض');render();
  }
